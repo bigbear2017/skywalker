@@ -35,4 +35,12 @@ public class Splitter {
   public double getFeatureValue() {
     return featureValue;
   }
+
+  public void setFeatureIndex(int featureIndex) {
+    this.featureIndex = featureIndex;
+  }
+
+  public void setFeatureValue(double featureValue) {
+    this.featureValue = featureValue;
+  }
 }

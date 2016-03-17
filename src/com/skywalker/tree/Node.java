@@ -1,10 +1,13 @@
 package com.skywalker.tree;
 
+import com.skywalker.utils.Sorter;
+import com.skywalker.utils.Tuple;
 import org.jblas.DoubleMatrix;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
+/** This class define the node of decision tree.
  * @author caonn
  * @version 16-3-4.
  */
@@ -17,6 +20,13 @@ public class Node {
 
   private static DoubleMatrix x;
   private static DoubleMatrix y;
+  private static int featureSize;
+  private static Criterion criterion = null;
+
+  private static Map<String, Criterion>  criterionMap = new HashMap<String, Criterion>();
+  static {
+    criterionMap.put("mse", new MseCriterion());
+  }
 
   public Node(int[] indices) {
     this.leftNode = null;
@@ -35,7 +45,7 @@ public class Node {
   public Node() {
   }
 
-  public boolean isLabel() {
+  public boolean isLeafNode() {
     if(leftNode == null && rightNode == null) {
       return true;
     }
@@ -46,12 +56,36 @@ public class Node {
     return 0;
   }
 
-  public static Node getHeadNode(int numSamples) {
+  public static Node getHeadNode(DoubleMatrix x, DoubleMatrix y, int numSamples, int featureSize, String criterion) {
+    Node.x = x;
+    Node.y = y;
+    Node.featureSize = featureSize;
+    Node.criterion = criterionMap.get(criterion);
     return new Node(new int[numSamples]);
   }
 
   public Splitter getBestSplitter() {
-    return new Splitter();
+    Splitter bestSplitter = new Splitter();
+    double bestCriterion = Double.MIN_VALUE;
+    for(int f = 0; f < featureSize; f++) {
+      DoubleMatrix feature = x.getColumns(indices).getColumn(f);//for the first feature, get the split point.
+      double [] data = feature.data;
+      Tuple<Double, Integer>[] arrIndices = Sorter.sortDoubleArrayWithIndex(data);
+      criterion.init(arrIndices);
+      int arrSize = arrIndices.length;
+      for( int i = 0; i < arrSize; i++ ) {
+        while( (i < arrSize - 1) && (arrIndices[i].first() != arrIndices[i+1].first())  ) {
+          i++;
+        }
+        double criterionValue = criterion.getCriterionValue(i);
+        if( criterionValue > bestCriterion) {
+          bestSplitter.setFeatureIndex(f);
+          bestSplitter.setFeatureValue(arrIndices[i].first());
+        }
+      }
+
+    }
+    return bestSplitter;
   }
 
   public Node getLeftNode() {
@@ -90,7 +124,4 @@ public class Node {
     return indices;
   }
 
-  public void setIndices(int[] indices) {
-    this.indices = indices;
-  }
 }

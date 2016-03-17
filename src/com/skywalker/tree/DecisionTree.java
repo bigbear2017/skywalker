@@ -17,6 +17,7 @@ public class DecisionTree {
   private int maxHeight;   //maximal height for the tree
   private int numFeatures;
   private int numSamples;
+  private String criterion;
   private Node headNode;
 
   /**
@@ -26,7 +27,7 @@ public class DecisionTree {
    * @param y The labels to fit the model
    */
   public void fit(DoubleMatrix x, DoubleMatrix y) {
-    Node headNode = Node.getHeadNode(numFeatures);
+    Node headNode = Node.getHeadNode(x, y, numFeatures, x.getColumns(), criterion);
     Queue<Node> treeNodes = new LinkedList<Node>();
     treeNodes.add(headNode);
     int treeHeight = 0;
@@ -36,7 +37,6 @@ public class DecisionTree {
         if (currentNode.getIndices().length < minSamples) {
           continue;
         }
-
         Splitter splitter = currentNode.getBestSplitter();
         Node leftNode = splitter.getLeftNode();
         Node rightNode = splitter.getRightNode();
@@ -59,7 +59,7 @@ public class DecisionTree {
     Node node = headNode;
     DoubleMatrix res = DoubleMatrix.ones(numSamplesX);
     for( int i = 0; i < numSamplesX; i++ ) {
-      while(!node.isLabel()) {
+      while(!node.isLeafNode()) {
         DoubleMatrix xp = xs.getRow(i);
         if (xp.get(node.getFeatureIndex()) < node.getFeatureValue()) {
           node = node.getLeftNode();
