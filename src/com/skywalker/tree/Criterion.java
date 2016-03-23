@@ -11,8 +11,9 @@ import org.jblas.DoubleMatrix;
  * @version 16-3-7.
  */
 public abstract class Criterion {
-  protected double[] data;
+  protected int size;
   protected int[] indices;
+  protected double[] data;
   protected DoubleMatrix y;
 
   public void init(Tuple<Double, Integer>[] arrIndices) {
@@ -29,10 +30,30 @@ public abstract class Criterion {
 }
 
 class MseCriterion extends Criterion {
+  private double sumPrefix = 0;
+  private double sumSuffix = 0;
+  private int lastPointer = 0;
+  private double avgPrefix = 0;
+  private double avgSuffix = 0;
+
   @Override
-  public double getCriterionValue(int i) {
+  public double getCriterionValue(int index) {
+    updateSum(index);
+    updateAvg(index);
 
     return 0;
+  }
+
+  protected  void updateSum( int index ) {
+    for(int i = lastPointer; i <= index; i++ ) {
+      sumPrefix += y.get(indices[i]);
+      sumSuffix -= y.get(indices[i]);
+    }
+  }
+
+  protected void updateAvg( int index ) {
+    avgPrefix = sumPrefix / index;
+    avgSuffix = sumSuffix / ( size - index - 1);
   }
 }
 
