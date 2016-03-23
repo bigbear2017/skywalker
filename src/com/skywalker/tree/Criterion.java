@@ -58,6 +58,10 @@ class MseCriterion extends Criterion {
     avgSuffix = sumSuffix / ( size - index - 1);
   }
 
+  /**
+   * TODO : rewrite this part by using vectors
+   * @return new criterion value
+   */
   protected double updateCriterion() {
     double criterionValue = 0;
     for(int i = 0; i < lastPointer; i++) {
@@ -82,23 +86,30 @@ class GiniCriterion extends Criterion {
 class MissClassCriterion extends Criterion {
   private double p = 0;
   private int numLabel = 0;
-  private int [] labelArray;
+  private Integer [] labelCounts;
 
   @Override
   public void init(Tuple<Double, Integer>[] arrIndices ) {
     super.init(arrIndices);
-    List<Integer> labelList = new ArrayList<Integer>();
-    double preValue = arrIndices[0].first();
-    int labelCounter = 1;
-    for( int i = 1; i < size; i++ ) {
+    List<Integer> countList = new ArrayList<Integer>();
+    double preValue = Double.MIN_VALUE;
+    int index = -1;
+    int labelCounter = 0;
+    for( int i = 0; i < size; i++ ) {
       double nextValue = arrIndices[i].first();
+      labelCounter +=1;
       if( Math.abs(preValue - nextValue) > 0.001 ) {
-        labelList.add(labelCounter);
-        labelCounter = 0;
-        preValue = nextValue;
+        index += 1;
+        countList.set(index, labelCounter);
+        labelCounter = 1;
+      } else {
+        labelCounter +=1;
+        countList.set(index, labelCounter);
       }
-      labelCounter += 1;
     }
+    numLabel = countList.size();
+    labelCounts = new Integer[numLabel];
+    labelCounts = countList.toArray(labelCounts);
   }
   @Override
   public double getCriterionValue(int index) {
