@@ -7,7 +7,7 @@
   <name>skywalker</name>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>skywalker</artifactId>
-  <version>${project.majorVersion}.0.1-SNAPSHOT</version>
+  <version>0.0.1-SNAPSHOT</version>
   <description>The skywalker project</description>
 
   <build>
