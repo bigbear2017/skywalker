@@ -20,7 +20,6 @@ public class Sorter {
     }
 
     Comparator<Tuple<X, Y>> comparator = new Comparator<Tuple<X, Y>>() {
-      @Override
       public int compare(Tuple<X, Y> t1, Tuple<X, Y> t2) {
         return t1.first().compareTo(t2.first());
       }
@@ -39,7 +38,6 @@ public class Sorter {
       tuples[i] = new Tuple<X,Y> (xArr[i], yArr[i]);
     }
     Comparator<Tuple<X,Y>> comparator = new Comparator<Tuple<X,Y>>() {
-      @Override
       public int compare(Tuple<X,Y> t1, Tuple<X, Y> t2) {
         return t1.first().compareTo(t2.first());
       }
@@ -55,7 +53,6 @@ public class Sorter {
     }
 
     Comparator<Tuple<Double, Integer>> comparator = new Comparator<Tuple<Double, Integer>>() {
-      @Override
       public int compare(Tuple<Double, Integer> t1, Tuple<Double, Integer> t2) {
         return t1.first().compareTo(t2.first());
       }

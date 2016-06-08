@@ -14,10 +14,26 @@ import java.util.List;
  * @version 16-3-7.
  */
 public abstract class Criterion {
-  protected int size;
-  protected int[] indices;
-  protected double[] data;
+  /**
+   * Given an index, return current criterion value
+   * @param i the index
+   * @return criterion value
+   */
+  public abstract double getCriterionValue(int i);
+}
+
+class MseCriterion extends Criterion {
   protected DoubleMatrix y;
+  protected DoubleMatrix feature;
+  protected int [] indices;
+  protected int size;
+
+  public MseCriterion(DoubleMatrix feature, DoubleMatrix y, int [] indices) {
+    this.feature = feature;
+    this.y = y;
+    this.indices = indices;
+    this.size = indices.length;
+  }
 
   public void init(Tuple<Double, Integer>[] arrIndices) {
     int size = arrIndices.length;
@@ -29,10 +45,6 @@ public abstract class Criterion {
     }
   }
 
-  public abstract double getCriterionValue(int i);
-}
-
-class MseCriterion extends Criterion {
   private double sumPrefix = 0;
   private double sumSuffix = 0;
   private int lastPointer = 0;
