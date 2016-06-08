@@ -28,18 +28,19 @@ public class DecisionTree {
    */
   public void fit(DoubleMatrix x, DoubleMatrix y) {
     Node headNode = Node.getHeadNode(x, y, numFeatures, x.getColumns(), criterion);
-    Queue<Node> treeNodes = new LinkedList<Node>();
-    treeNodes.add(headNode);
+    Queue<Node> curLevelNodes = new LinkedList<Node>();
+    curLevelNodes.add(headNode);
     int treeHeight = 0;
-    while (treeHeight < maxHeight) {
-      while (!treeNodes.isEmpty()) {
-        Node currentNode = treeNodes.poll();
+    while (treeHeight < maxHeight && !curLevelNodes.isEmpty()) {
+      Queue<Node> nextLevelNodes = new LinkedList<Node>();
+      while (!curLevelNodes.isEmpty()) {
+        Node currentNode = curLevelNodes.poll();
         if (currentNode.getIndices().length < minSamples) {
           continue;
         }
         Splitter splitter = currentNode.getBestSplitter();
-        Node leftNode = splitter.getLeftNode();
-        Node rightNode = splitter.getRightNode();
+        Node leftNode = currentNode.splitLeftNode(splitter);
+        Node rightNode = currentNode.splitRightNode(splitter);
         if (leftNode.getIndices().length < minSamples || rightNode.getIndices().length < minSamples) {
           continue;
         }
@@ -47,9 +48,10 @@ public class DecisionTree {
         currentNode.setRightNode(rightNode);
         currentNode.setFeatureIndex(splitter.getFeatureIndex());
         currentNode.setFeatureValue(splitter.getFeatureValue());
-        treeNodes.add(leftNode);
-        treeNodes.add(rightNode);
+        nextLevelNodes.add(leftNode);
+        nextLevelNodes.add(rightNode);
       }
+      curLevelNodes = nextLevelNodes;
       treeHeight ++;
     }
   }

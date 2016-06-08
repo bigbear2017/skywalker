@@ -1,5 +1,6 @@
 package com.skywalker.tree;
 
+
 /**
  * This class is to split each node. Given a node, the splitter will scan all
  * the features. And for each feature, the splitter will scan all the possible
@@ -11,22 +12,6 @@ package com.skywalker.tree;
 public class Splitter {
   private int featureIndex;
   private double featureValue;
-
-  private double getBestSplitValue() {
-    return 0;
-  }
-
-  private int getBestSplitIndex() {
-    return 1;
-  }
-
-  public Node getLeftNode() {
-    return new Node();
-  }
-
-  public Node getRightNode() {
-    return new Node();
-  }
 
   public int getFeatureIndex() {
     return featureIndex;

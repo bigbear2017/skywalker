@@ -22,6 +22,8 @@ public class Node {
 
   static {
     criterionMap.put("mse", new MseCriterion());
+    criterionMap.put("gini", new GiniCriterion());
+    criterionMap.put("miss", new MissClassCriterion());
   }
 
   private Node leftNode = null; //Left Tree to traversal
@@ -51,7 +53,6 @@ public class Node {
 
   public double getLabel(DoubleMatrix xp) {
     double res = 0;
-
     return res;
   }
 
@@ -69,7 +70,7 @@ public class Node {
   public Splitter getBestSplitter() {
     Splitter bestSplitter = new Splitter();
     double bestCriterion = Double.MIN_VALUE;
-    for (int f = 0; f < featureSize; f++) {
+    for () {
       DoubleMatrix feature = x.getColumns(indices).getColumn(f);//for the first feature, get the split point.
       double[] data = feature.data;
       Tuple<Double, Integer>[] arrIndices = Sorter.sortDoubleArrayWithIndex(data);
@@ -97,6 +98,9 @@ public class Node {
   public void setLeftNode(Node leftNode) {
     this.leftNode = leftNode;
   }
+
+  public Node splitLeftNode(Splitter splitter ) { return new Node();}
+  public Node splitRightNode(Splitter splitter) { return new Node();}
 
   public Node getRightNode() {
     return rightNode;
