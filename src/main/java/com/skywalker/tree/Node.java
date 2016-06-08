@@ -74,7 +74,7 @@ public class Node {
       DoubleMatrix feature = x.getColumns(indices).getColumn(f);//for the first feature, get the split point.
       double[] data = feature.data;
       Tuple<Double, Integer>[] arrIndices = Sorter.sortDoubleArrayWithIndex(data);
-      criterion.init(arrIndices);
+      //criterion.init(arrIndices);
       int arrSize = arrIndices.length;
       for (int i = 0; i < arrSize; i++) {
         while ((i < arrSize - 1) && (arrIndices[i].first() != arrIndices[i + 1].first())) {
