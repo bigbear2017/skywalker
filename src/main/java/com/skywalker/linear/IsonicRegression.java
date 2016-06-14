@@ -34,9 +34,10 @@ public class IsonicRegression {
   private void merge(Record record) {
     if( records.size() == 0 ) {
       records.add(record);
+      return;
     }
     Record lastRecord = records.peek();
-    if( lastRecord.value <= record.value ) {
+    if( lastRecord.value < record.value ) {
       records.add(record);
     } else {
       records.pop();
@@ -45,7 +46,6 @@ public class IsonicRegression {
       Record newRecord = new Record(lastRecord.lowIndex, record.highIndex, newValue, newNumber);
       merge(newRecord);
     }
-
   }
 
   public void printRecords() {
@@ -72,6 +72,6 @@ class Record {
     this.number = number;
   }
   public String toString() {
-    return String.valueOf(lowIndex) + " " + String.valueOf(highIndex) + " " + String.valueOf(value);
+    return String.valueOf(lowIndex) + " " + String.valueOf(highIndex) + " " + String.valueOf(value) + " " + String.valueOf(number);
   }
 }

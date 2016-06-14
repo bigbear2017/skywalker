@@ -70,7 +70,7 @@ public class Node {
   public Splitter getBestSplitter() {
     Splitter bestSplitter = new Splitter();
     double bestCriterion = Double.MIN_VALUE;
-    for () {
+    for (int f = 0; f < featureSize; f++ ) {
       DoubleMatrix feature = x.getColumns(indices).getColumn(f);//for the first feature, get the split point.
       double[] data = feature.data;
       Tuple<Double, Integer>[] arrIndices = Sorter.sortDoubleArrayWithIndex(data);

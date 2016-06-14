@@ -28,19 +28,18 @@ class MseCriterion extends Criterion {
   protected int [] indices;
   protected int size;
 
-  public MseCriterion(DoubleMatrix feature, DoubleMatrix y, int [] indices) {
+  public MseCriterion() {
+  }
+
+  public void init(DoubleMatrix feature, DoubleMatrix y, int [] indices, Tuple<Double, Integer>[] arrIndices) {
     this.feature = feature;
     this.y = y;
     this.indices = indices;
     this.size = indices.length;
-  }
 
-  public void init(Tuple<Double, Integer>[] arrIndices) {
     int size = arrIndices.length;
-    data = new double[size];
     indices = new int[size];
     for (int i = 0; i < size; i++) {
-      data[i] = arrIndices[i].first();
       indices[i] = arrIndices[i].second();
     }
   }
@@ -99,10 +98,10 @@ class MissClassCriterion extends Criterion {
   private double p = 0;
   private int numLabel = 0;
   private Integer [] labelCounts;
+  private int size;
 
-  @Override
   public void init(Tuple<Double, Integer>[] arrIndices ) {
-    super.init(arrIndices);
+    //super.init(arrIndices);
     List<Integer> countList = new ArrayList<Integer>();
     double preValue = Double.MIN_VALUE;
     int index = -1;

@@ -1,8 +1,10 @@
 package com.skywalker.linear;
 
+import com.google.common.collect.Lists;
 import com.skywalker.utils.Tuple;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Random;
 
 /** Test cases for class {@link IsonicRegression}.
@@ -12,15 +14,15 @@ import java.util.Random;
 public class TestIsotonicRegression {
   @Test
   public void test_fit() {
+    List<Tuple<Double,Double>> tuples = Lists.newArrayList();
     Random random = new Random();
-    int size = 100;
-    double [] x = new double[size];
-    double [] y = new double[size];
+    int size = 10000;
     for( int i = 0; i < size; i++ ) {
-      x[i] = random.nextDouble();
-      y[i] = random.nextDouble();
+      tuples.add(new Tuple<Double, Double>(random.nextDouble(), random.nextDouble()));
     }
-    List<Tuple<Double,Double>>
+    IsonicRegression isotonic = new IsonicRegression();
+    isotonic.fit(tuples);
+    isotonic.printRecords();
   }
 
 }
