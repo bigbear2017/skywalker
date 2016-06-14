@@ -28,7 +28,7 @@ public class IsotonicRegression {
   }
 
   /**
-   * merge record to record list.
+   * Merge record to record list.
    * @param record record to be merged into records.
    */
   private void merge(Record record) {
@@ -54,9 +54,25 @@ public class IsotonicRegression {
     }
   }
 
-  public List<Double> predict(List<Tuple<Double, Double>> tuples) {
+  public List<Double> predict(List<Double> indices) {
+    List<Double> result = Lists.newArrayList();
+    for( Double index : indices) {
+      for(Record r : records) {
+        if( index > r.lowIndex && index <= r.highIndex ) {
+          result.add(r.value);
+        }
+      }
+    }
+    return result;
+  }
 
-    return Lists.newArrayList();
+  public double predict( double index ) {
+    for(Record r : records) {
+      if( index > r.lowIndex && index <= r.highIndex ) {
+        return r.value;
+      }
+    }
+    return 1;
   }
 }
 
