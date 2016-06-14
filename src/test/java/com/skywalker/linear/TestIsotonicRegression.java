@@ -7,7 +7,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Random;
 
-/** Test cases for class {@link IsonicRegression}.
+/** Test cases for class {@link IsotonicRegression}.
  * @author caonn@mediav.com
  * @version 16/6/14.
  */
@@ -20,7 +20,7 @@ public class TestIsotonicRegression {
     for( int i = 0; i < size; i++ ) {
       tuples.add(new Tuple<Double, Double>(random.nextDouble(), random.nextDouble()));
     }
-    IsonicRegression isotonic = new IsonicRegression();
+    IsotonicRegression isotonic = new IsotonicRegression();
     isotonic.fit(tuples);
     isotonic.printRecords();
   }

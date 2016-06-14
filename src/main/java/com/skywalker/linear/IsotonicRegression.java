@@ -12,7 +12,7 @@ import java.util.Stack;
  * @author caonn@mediav.com
  * @version 16/6/12.
  */
-public class IsonicRegression {
+public class IsotonicRegression {
   private Stack<Record> records = new Stack<Record>();
 
   /**
