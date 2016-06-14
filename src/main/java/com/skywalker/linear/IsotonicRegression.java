@@ -57,22 +57,23 @@ public class IsotonicRegression {
   public List<Double> predict(List<Double> indices) {
     List<Double> result = Lists.newArrayList();
     for( Double index : indices) {
-      for(Record r : records) {
-        if( index > r.lowIndex && index <= r.highIndex ) {
-          result.add(r.value);
-        }
-      }
+      result.add(predict(index));
     }
     return result;
   }
 
   public double predict( double index ) {
+    Record first = records.firstElement();
+    if( index <= first.lowIndex ) return first.value;
+
     for(Record r : records) {
       if( index > r.lowIndex && index <= r.highIndex ) {
         return r.value;
       }
     }
-    return 1;
+
+    Record last = records.lastElement();
+    return last.value;
   }
 }
 
