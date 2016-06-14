@@ -58,10 +58,6 @@ public class IsonicRegression {
 
     return Lists.newArrayList();
   }
-
-  public static void main(String [] args) {
-
-  }
 }
 
 class Record {
