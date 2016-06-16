@@ -19,6 +19,7 @@ public class Node {
   private static int featureSize;
   private static Criterion criterion = null;
   private static Map<String, Criterion> criterionMap = new HashMap<String, Criterion>();
+  private static Node headNode = null;
 
   static {
     criterionMap.put("mse", new MseCriterion());
@@ -41,6 +42,13 @@ public class Node {
   }
 
   public Node() {
+  }
+
+  public static Node getHeadNode() {
+    if( headNode == null ) {
+      headNode = new Node();
+    }
+    return headNode;
   }
 
   public static Node getHeadNode(DoubleMatrix x, DoubleMatrix y, int numSamples, int featureSize, String criterion) {

@@ -13,12 +13,10 @@ import java.util.Queue;
  * @version 16-3-4.
  */
 public class DecisionTree {
-  private int minSamples;  //mininal samles for each node, default 1
-  private int maxHeight;   //maximal height for the tree
-  private int numFeatures;
-  private int numSamples;
-  private String criterion;
-  private Node headNode;
+  private Node headNode = null;
+  private static DataBlock db;
+  public DecisionTree(String [] args) {
+  }
 
   /**
    * With all the parameters above, fit the data with the model.
@@ -27,21 +25,21 @@ public class DecisionTree {
    * @param y The labels to fit the model
    */
   public void fit(DoubleMatrix x, DoubleMatrix y) {
-    Node headNode = Node.getHeadNode(x, y, numFeatures, x.getColumns(), criterion);
+    Node headNode = Node.getHeadNode(x, y, db.numFeatures, x.getColumns(), db.criterion);
     Queue<Node> curLevelNodes = new LinkedList<Node>();
     curLevelNodes.add(headNode);
     int treeHeight = 0;
-    while (treeHeight < maxHeight && !curLevelNodes.isEmpty()) {
+    while (treeHeight < db.maxHeight && !curLevelNodes.isEmpty()) {
       Queue<Node> nextLevelNodes = new LinkedList<Node>();
       while (!curLevelNodes.isEmpty()) {
         Node currentNode = curLevelNodes.poll();
-        if (currentNode.getIndices().length < minSamples) {
+        if (currentNode.getIndices().length < db.minSamples) {
           continue;
         }
         Splitter splitter = currentNode.getBestSplitter();
         Node leftNode = currentNode.splitLeftNode(splitter);
         Node rightNode = currentNode.splitRightNode(splitter);
-        if (leftNode.getIndices().length < minSamples || rightNode.getIndices().length < minSamples) {
+        if (leftNode.getIndices().length < db.minSamples || rightNode.getIndices().length < db.minSamples) {
           continue;
         }
         currentNode.setLeftNode(leftNode);
@@ -73,5 +71,25 @@ public class DecisionTree {
       res.put(i, labelValue);
     }
     return res;
+  }
+  public static class DataBlock {
+    public final int minSamples;  //mininal samles for each node, default 1
+    public final int maxHeight;   //maximal height for the tree
+    public final int numFeatures ;
+    public final int numSamples ;
+    public final String criterion ;
+    public final DoubleMatrix x;
+    public final DoubleMatrix y ;
+
+    public DataBlock(int minSamples, int maxHeight, int numFeatures, int numSamples,
+                     String criterion, DoubleMatrix x, DoubleMatrix y) {
+      this.minSamples = minSamples;
+      this.maxHeight = maxHeight;
+      this.numFeatures = numFeatures;
+      this.numSamples = numSamples;
+      this.criterion = criterion;
+      this.x = x;
+      this.y = y;
+    }
   }
 }
