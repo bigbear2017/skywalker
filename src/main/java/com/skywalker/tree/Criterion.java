@@ -4,7 +4,9 @@ import com.skywalker.utils.Tuple;
 import org.jblas.DoubleMatrix;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The criterion can only be used for two classes.
@@ -14,12 +16,30 @@ import java.util.List;
  * @version 16-3-7.
  */
 public abstract class Criterion {
+  private static Map<String, Criterion> criterionMap = new HashMap<String, Criterion>();
+  static {
+    criterionMap.put("mse", new MseCriterion());
+    criterionMap.put("gini", new GiniCriterion());
+    criterionMap.put("miss", new MissClassCriterion());
+  }
+
+  protected static DecisionTree.ParamBlock pb = null;
+  protected static DecisionTree.DataBlock db = null;
+
   /**
    * Given an index, return current criterion value
    * @param i the index
    * @return criterion value
    */
   public abstract double getCriterionValue(int i);
+
+  public abstract void init( int [] indices );
+
+  public static Criterion getCriterion(DecisionTree.ParamBlock pb, DecisionTree.DataBlock db) {
+    Criterion.pb = pb;
+    Criterion.db = db;
+    return criterionMap.get(pb.criterion);
+  }
 }
 
 class MseCriterion extends Criterion {
@@ -31,7 +51,8 @@ class MseCriterion extends Criterion {
   public MseCriterion() {
   }
 
-  public void init(DoubleMatrix feature, DoubleMatrix y, int [] indices, Tuple<Double, Integer>[] arrIndices) {
+  @Override
+  public void init( int [] indices ) {
     this.feature = feature;
     this.y = y;
     this.indices = indices;

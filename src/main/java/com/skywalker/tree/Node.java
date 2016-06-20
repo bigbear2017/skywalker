@@ -4,9 +4,6 @@ import com.skywalker.utils.Sorter;
 import com.skywalker.utils.Tuple;
 import org.jblas.DoubleMatrix;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * This class define the node of decision tree.
  *
@@ -14,49 +11,45 @@ import java.util.Map;
  * @version 16-3-4.
  */
 public class Node {
-  private static DoubleMatrix x;
-  private static DoubleMatrix y;
-  private static int featureSize;
-  private static Criterion criterion = null;
-  private static Map<String, Criterion> criterionMap = new HashMap<String, Criterion>();
   private static Node headNode = null;
-
-  static {
-    criterionMap.put("mse", new MseCriterion());
-    criterionMap.put("gini", new GiniCriterion());
-    criterionMap.put("miss", new MissClassCriterion());
-  }
+  private static DecisionTree.ParamBlock pb;
+  private static DecisionTree.DataBlock db;
+  private Criterion criterion = null;
 
   private Node leftNode = null; //Left Tree to traversal
   private Node rightNode = null; //Right Tree to traversal
-  private int featureIndex;
-  private double featureValue;
-  private int[] indices; //all the data points that belongs to this node
-
-  public Node(int[] indices) {
-    this.leftNode = null;
-    this.rightNode = null;
-    this.featureIndex = -1;
-    this.featureValue = Double.MAX_VALUE;
-    this.indices = indices;
-  }
+  private Splitter splitter = null;
+  private int [] indices = null; //the indices in this node
 
   public Node() {
   }
 
-  public static Node getHeadNode() {
+  /**
+   * Get the head node, use singleton.
+   * @return head node of the tree.
+   */
+  public static Node getHeadNode(DecisionTree.ParamBlock pb, DecisionTree.DataBlock db) {
     if( headNode == null ) {
+      Node.pb = pb;
+      Node.db = db;
       headNode = new Node();
+      headNode.setIndices(getHeadIndices());
+      headNode.initCriterion();
     }
     return headNode;
   }
 
-  public static Node getHeadNode(DoubleMatrix x, DoubleMatrix y, int numSamples, int featureSize, String criterion) {
-    Node.x = x;
-    Node.y = y;
-    Node.featureSize = featureSize;
-    Node.criterion = criterionMap.get(criterion);
-    return new Node(new int[numSamples]);
+  private static int [] getHeadIndices() {
+    int [] indices = new int[db.totalSamples];
+    for( int i = 0; i < db.totalSamples; i++ ) {
+      indices[i] = i;
+    }
+    return indices;
+  }
+
+  private void initCriterion() {
+    criterion = Criterion.getCriterion(pb, db);
+    criterion.init(indices);
   }
 
   public double getLabel(DoubleMatrix xp) {
@@ -78,17 +71,16 @@ public class Node {
   public Splitter getBestSplitter() {
     Splitter bestSplitter = new Splitter();
     double bestCriterion = Double.MIN_VALUE;
-    for (int f = 0; f < featureSize; f++ ) {
-      DoubleMatrix feature = x.getColumns(indices).getColumn(f);//for the first feature, get the split point.
+    for (int f = 0; f < db.featureSize; f++ ) {
+      DoubleMatrix feature = db.x.getColumns(indices).getColumn(f);//for the first feature, get the split point.
       double[] data = feature.data;
       Tuple<Double, Integer>[] arrIndices = Sorter.sortDoubleArrayWithIndex(data);
-      //criterion.init(arrIndices);
       int arrSize = arrIndices.length;
       for (int i = 0; i < arrSize; i++) {
         while ((i < arrSize - 1) && (arrIndices[i].first() != arrIndices[i + 1].first())) {
           i++;
         }
-        double criterionValue = criterion.getCriterionValue(i);
+        double criterionValue = 0;
         if (criterionValue > bestCriterion) {
           bestSplitter.setFeatureIndex(f);
           bestSplitter.setFeatureValue(arrIndices[i].first());
@@ -118,24 +110,32 @@ public class Node {
     this.rightNode = rightNode;
   }
 
-  public int getFeatureIndex() {
-    return featureIndex;
-  }
-
-  public void setFeatureIndex(int featureIndex) {
-    this.featureIndex = featureIndex;
-  }
-
-  public double getFeatureValue() {
-    return featureValue;
-  }
-
-  public void setFeatureValue(double featureValue) {
-    this.featureValue = featureValue;
-  }
-
   public int[] getIndices() {
     return indices;
   }
 
+  public Splitter getSplitter() {
+    return splitter;
+  }
+
+  public void setSplitter(Splitter splitter) {
+    this.splitter = splitter;
+  }
+
+  public int getFeatureIndex() {
+    return splitter.getFeatureIndex();
+  }
+
+  public double getFeatureValue() {
+    return splitter.getFeatureValue();
+  }
+
+  public int getNumSamples() {
+    return indices.length;
+  }
+
+  public void setIndices(int[] indices) {
+    this.indices = indices;
+  }
 }
+
