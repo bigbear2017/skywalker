@@ -112,7 +112,6 @@ class GiniCriterion extends Criterion {
 
   @Override
   public void init(int[] indices) {
-
   }
 
   @Override
