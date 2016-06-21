@@ -1,9 +1,13 @@
 package com.skywalker.tree;
 
+import com.skywalker.utils.OptionParser;
 import org.jblas.DoubleMatrix;
 
 import java.util.LinkedList;
 import java.util.Queue;
+
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 
 /**
  * This class will implement the simplest decision tree algorithm.
@@ -18,6 +22,7 @@ public class DecisionTree {
   private static DataBlock db;
 
   public DecisionTree(String [] args) {
+    pb = OptionParser.parse(new ParamBlock(), args);
   }
 
   /**
@@ -74,21 +79,18 @@ public class DecisionTree {
     }
     return res;
   }
-  public static class ParamBlock {
-    public final int minSamples;  //mininal samles for each node, default 1
-    public final int maxHeight;   //maximal height for the tree
-    public final int numFeatures ;
-    public final int numSamples ;
-    public final String criterion ;
 
-    public ParamBlock(int minSamples, int maxHeight, int numFeatures, int numSamples,
-                     String criterion) {
-      this.minSamples = minSamples;
-      this.maxHeight = maxHeight;
-      this.numFeatures = numFeatures;
-      this.numSamples = numSamples;
-      this.criterion = criterion;
-    }
+
+  public static class ParamBlock {
+    @Option(name = "-minSamples", usage = "the minimum samples for each node")
+    public int minSamples;  //mininal samles for each node, default 1
+
+    @Option(name = "-maxHeight", usage = "The max height of the tree")
+    public int maxHeight;   //maximal height for the tree
+
+    @Option(name = "-criterion", usage = "Criterion to use in the evaluation")
+    public String criterion ;
+
   }
   public static class DataBlock {
     public final DoubleMatrix x;

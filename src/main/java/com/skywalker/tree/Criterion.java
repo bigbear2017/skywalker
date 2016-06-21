@@ -28,10 +28,10 @@ public abstract class Criterion {
 
   /**
    * Given an index, return current criterion value
-   * @param i the index
+   * @param featureValue the feature value to split current node
    * @return criterion value
    */
-  public abstract double getCriterionValue(int i);
+  public abstract double getCriterionValue(int featureIndex, double featureValue);
 
   public abstract void init( int [] indices );
 
@@ -44,82 +44,95 @@ public abstract class Criterion {
 
 class MseCriterion extends Criterion {
   protected DoubleMatrix y;
-  protected DoubleMatrix feature;
+  protected DoubleMatrix x;
   protected int [] indices;
   protected int size;
+
+  int leftCounter = 0;
+  int rightCounter = 0;
+  double leftSum = 0;
+  double rightSum = 0;
 
   public MseCriterion() {
   }
 
   @Override
   public void init( int [] indices ) {
-    this.feature = feature;
-    this.y = y;
     this.indices = indices;
     this.size = indices.length;
-
-    int size = arrIndices.length;
-    indices = new int[size];
-    for (int i = 0; i < size; i++) {
-      indices[i] = arrIndices[i].second();
-    }
+    this.y = db.y;
+    this.x = db.x;
   }
-
-  private double sumPrefix = 0;
-  private double sumSuffix = 0;
-  private int lastPointer = 0;
-  private double avgPrefix = 0;
-  private double avgSuffix = 0;
 
   @Override
-  public double getCriterionValue(int index) {
-    updateSum(index);
-    updateAvg(index);
-    return updateCriterion();
+  public double getCriterionValue(int featureIndex, double featureValue) {
+    clearValue();
+    updateAvg(featureIndex, featureValue);
+    return -1 * calcCriterion(featureIndex, featureValue);
   }
 
-  protected  void updateSum( int index ) {
-    for(int i = lastPointer; i <= index; i++ ) {
-      sumPrefix += y.get(indices[i]);
-      sumSuffix -= y.get(indices[i]);
+  private void clearValue() {
+    leftCounter = 0;
+    rightCounter = 0;
+    leftSum = 0;
+    rightSum = 0;
+  }
+
+  private void updateAvg(int featureIndex, double featureValue) {
+    DoubleMatrix xs = x.getColumn(featureIndex);
+    for(int i = 0; i < size; i++) {
+      if( xs.get(i) <= featureValue ) {
+        leftCounter += 1;
+        leftSum += y.get(i);
+      } else {
+        rightCounter += 1;
+        rightSum += y.get(i);
+      }
     }
   }
 
-  protected void updateAvg( int index ) {
-    avgPrefix = sumPrefix / index;
-    avgSuffix = sumSuffix / ( size - index - 1);
+  private double calcCriterion(int featureIndex, double featureValue) {
+    double criterion = 0;
+    DoubleMatrix xs = x.getColumn(featureIndex);
+    double leftAvg = leftSum / leftCounter;
+    double rightAvg = rightSum / rightCounter;
+    for(int i = 0; i < size; i++) {
+      if( xs.get(i) <= featureValue ) {
+        criterion += (y.get(i) - leftAvg) * (y.get(i) - leftAvg);
+      } else {
+        criterion += (y.get(i) - rightAvg) * (y.get(i) - rightAvg);
+      }
+    }
+    return criterion;
   }
 
-  /**
-   * TODO : rewrite this part by using vectors
-   * @return new criterion value
-   */
-  protected double updateCriterion() {
-    double criterionValue = 0;
-    for(int i = 0; i < lastPointer; i++) {
-      double value = y.get(indices[i]) - avgPrefix;
-      criterionValue += value * value;
-    }
-    for(int i = lastPointer + 1; i < size; i++) {
-      double value = y.get(indices[i]) - avgSuffix;
-      criterionValue += value * value;
-    }
-    return criterionValue;
-  }
 }
 
 class GiniCriterion extends Criterion {
+
   @Override
-  public double getCriterionValue(int i) {
+  public void init(int[] indices) {
+
+  }
+
+  @Override
+  public double getCriterionValue(int featureIndex, double featureValue) {
     return 0;
   }
 }
 
 class MissClassCriterion extends Criterion {
+
+
   private double p = 0;
   private int numLabel = 0;
   private Integer [] labelCounts;
   private int size;
+
+  @Override
+  public void init(int[] indices) {
+
+  }
 
   public void init(Tuple<Double, Integer>[] arrIndices ) {
     //super.init(arrIndices);
@@ -144,7 +157,8 @@ class MissClassCriterion extends Criterion {
     labelCounts = countList.toArray(labelCounts);
   }
   @Override
-  public double getCriterionValue(int index) {
+  public double getCriterionValue(int featureIndex, double featureValue) {
+    int index = 0;
     updateP(index);
     return p * (1-p);
   }
