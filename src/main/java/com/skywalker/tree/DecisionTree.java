@@ -6,7 +6,6 @@ import org.jblas.DoubleMatrix;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
 /**
