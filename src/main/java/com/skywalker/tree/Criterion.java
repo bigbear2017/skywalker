@@ -1,9 +1,9 @@
 package com.skywalker.tree;
 
-import com.skywalker.utils.Tuple;
+import com.google.common.collect.Maps;
+import com.skywalker.utils.MapUtils;
 import org.jblas.DoubleMatrix;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +67,7 @@ class MseCriterion extends Criterion {
   @Override
   public double getCriterionValue(int featureIndex, double featureValue) {
     clearValue();
-    updateAvg(featureIndex, featureValue);
+    updateCounter(featureIndex, featureValue);
     return -1 * calcCriterion(featureIndex, featureValue);
   }
 
@@ -78,7 +78,7 @@ class MseCriterion extends Criterion {
     rightSum = 0;
   }
 
-  private void updateAvg(int featureIndex, double featureValue) {
+  private void updateCounter(int featureIndex, double featureValue) {
     DoubleMatrix xs = x.getColumn(featureIndex);
     for(int i = 0; i < size; i++) {
       if( xs.get(i) <= featureValue ) {
@@ -120,49 +120,74 @@ class GiniCriterion extends Criterion {
   }
 }
 
+
+/**
+ * A class to calculate the miss classification error criterion.
+ * All the values will be cast to int label.
+ */
 class MissClassCriterion extends Criterion {
+  protected DoubleMatrix y;
+  protected DoubleMatrix x;
+  protected int [] indices;
+  protected int size;
 
-
-  private double p = 0;
-  private int numLabel = 0;
-  private Integer [] labelCounts;
-  private int size;
+  double leftLabel;
+  double rightLabel;
+  int leftCounter;
+  int rightCounter;
 
   @Override
   public void init(int[] indices) {
-
-  }
-
-  public void init(Tuple<Double, Integer>[] arrIndices ) {
-    //super.init(arrIndices);
-    List<Integer> countList = new ArrayList<Integer>();
-    double preValue = Double.MIN_VALUE;
-    int index = -1;
-    int labelCounter = 0;
-    for( int i = 0; i < size; i++ ) {
-      double nextValue = arrIndices[i].first();
-      labelCounter +=1;
-      if( Math.abs(preValue - nextValue) > 0.001 ) {
-        index += 1;
-        countList.set(index, labelCounter);
-        labelCounter = 1;
-      } else {
-        labelCounter +=1;
-        countList.set(index, labelCounter);
-      }
-    }
-    numLabel = countList.size();
-    labelCounts = new Integer[numLabel];
-    labelCounts = countList.toArray(labelCounts);
+    this.indices = indices;
+    this.size = indices.length;
+    this.y = db.y;
+    this.x = db.x;
   }
   @Override
   public double getCriterionValue(int featureIndex, double featureValue) {
-    int index = 0;
-    updateP(index);
-    return p * (1-p);
+    clearValue();
+    updateLabel(featureIndex, featureValue);
+    return 0;
   }
 
-  protected void updateP( int index ) {
+  private void clearValue() {
+    leftCounter = 0;
+    rightCounter = 0;
+    leftLabel = 0;
+    rightLabel = 0;
+  }
+
+  private void updateLabel(int featureIndex, double featureValue) {
+    DoubleMatrix xs = x.getColumn(featureIndex);
+    Map<Integer, Integer> leftDict = Maps.newHashMap();
+    Map<Integer, Integer> rightDict = Maps.newHashMap();
+    for(int i = 0; i < size; i++) {
+      Integer key = wrapperValue(y.get(i));
+      if( xs.get(i) <= featureValue ) {
+        leftCounter += 1;
+        MapUtils.incrementMap(leftDict, key, 1);
+        List<Map.Entry<Integer, Integer>> values = MapUtils.sortMapByValue(leftDict);
+        leftLabel = unwrapperValue(values.get(0).getKey());
+      } else {
+        rightCounter += 1;
+        MapUtils.incrementMap(rightDict, key, 1);
+        List<Map.Entry<Integer, Integer>> values = MapUtils.sortMapByValue(rightDict);
+        rightLabel = unwrapperValue(values.get(0).getKey());
+      }
+    }
+  }
+
+  private int wrapperValue(double yi) {
+    return (int) (yi * 10);
+  }
+
+  private double unwrapperValue(int yi) {
+    return yi * 1.0 / 10;
+  }
+
+  private double calcCriterion(int featureIndex, double featureValue) {
+    double criterion = 0;
+    return criterion;
   }
 
 }
