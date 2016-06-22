@@ -135,6 +135,10 @@ class MissClassCriterion extends Criterion {
   double rightLabel;
   int leftCounter;
   int rightCounter;
+  int leftCorrect;
+  int rightCorrect;
+  List<Map.Entry<Integer,Integer>> leftList;
+  List<Map.Entry<Integer,Integer>> rightList;
 
   @Override
   public void init(int[] indices) {
@@ -143,11 +147,12 @@ class MissClassCriterion extends Criterion {
     this.y = db.y;
     this.x = db.x;
   }
+
   @Override
   public double getCriterionValue(int featureIndex, double featureValue) {
     clearValue();
     updateLabel(featureIndex, featureValue);
-    return 0;
+    return -1 * calcCriterion(featureIndex, featureValue);
   }
 
   private void clearValue() {
@@ -166,15 +171,17 @@ class MissClassCriterion extends Criterion {
       if( xs.get(i) <= featureValue ) {
         leftCounter += 1;
         MapUtils.incrementMap(leftDict, key, 1);
-        List<Map.Entry<Integer, Integer>> values = MapUtils.sortMapByValue(leftDict);
-        leftLabel = unwrapperValue(values.get(0).getKey());
       } else {
         rightCounter += 1;
         MapUtils.incrementMap(rightDict, key, 1);
-        List<Map.Entry<Integer, Integer>> values = MapUtils.sortMapByValue(rightDict);
-        rightLabel = unwrapperValue(values.get(0).getKey());
       }
     }
+    leftList = MapUtils.sortMapByValue(leftDict);
+    leftLabel = unwrapperValue(leftList.get(0).getKey());
+    leftCorrect = leftList.get(0).getValue();
+    rightList = MapUtils.sortMapByValue(rightDict);
+    rightLabel = unwrapperValue(rightList.get(0).getKey());
+    rightCorrect = rightList.get(0).getValue();
   }
 
   private int wrapperValue(double yi) {
@@ -185,8 +192,10 @@ class MissClassCriterion extends Criterion {
     return yi * 1.0 / 10;
   }
 
-  private double calcCriterion(int featureIndex, double featureValue) {
+  protected double calcCriterion(int featureIndex, double featureValue) {
     double criterion = 0;
+    criterion += ( 1 - leftCorrect * 1.0  / leftCounter );
+    criterion += ( 1- rightCorrect * 1.0 / rightCounter );
     return criterion;
   }
 

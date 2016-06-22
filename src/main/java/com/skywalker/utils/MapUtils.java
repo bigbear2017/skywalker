@@ -25,7 +25,7 @@ public class MapUtils {
     List<Map.Entry<T1, Integer>> entries = Lists.newArrayList(map.entrySet());
     Collections.sort(entries, new Comparator<Map.Entry<T1, Integer>>() {
       public int compare(Map.Entry<T1, Integer> o1, Map.Entry<T1, Integer> o2) {
-        return o1.getValue().compareTo(o2.getValue());
+        return -1 * o1.getValue().compareTo(o2.getValue());
       }
     });
     return entries;
