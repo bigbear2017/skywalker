@@ -1,8 +1,13 @@
 package com.skywalker.tree;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.skywalker.utils.ListUtils;
 import org.jblas.DoubleMatrix;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This class define the node of decision tree.
@@ -24,6 +29,12 @@ public class Node {
   public Node() {
   }
 
+  public Node(int [] indices) {
+    this.indices = indices;
+    this.criterion = Criterion.getCriterion(pb, db);
+    this.criterion.init(indices);
+  }
+
   /**
    * Get the head node, use singleton.
    * @return head node of the tree.
@@ -32,9 +43,7 @@ public class Node {
     if( headNode == null ) {
       Node.pb = pb;
       Node.db = db;
-      headNode = new Node();
-      headNode.setIndices(getHeadIndices());
-      headNode.initCriterion();
+      headNode = new Node(getHeadIndices());
     }
     return headNode;
   }
@@ -47,16 +56,6 @@ public class Node {
     return indices;
   }
 
-  private void initCriterion() {
-    criterion = Criterion.getCriterion(pb, db);
-    criterion.init(indices);
-  }
-
-  public double getLabel(DoubleMatrix xp) {
-    double res = 0;
-    return res;
-  }
-
   public boolean isLeafNode() {
     if (leftNode == null && rightNode == null) {
       return true;
@@ -65,7 +64,8 @@ public class Node {
   }
 
   public double getLabel() {
-    return 0;
+    System.out.println(db.y.get(indices) + " " + indices.length);
+    return criterion.getLabel();
   }
 
   public Splitter getBestSplitter() {
@@ -73,8 +73,9 @@ public class Node {
     criterion.init(indices);
     double bestCriterion = Double.MIN_VALUE;
     for (int f = 0; f < db.featureSize; f++ ) {
-      DoubleMatrix feature = db.x.getColumn(f).getColumns(indices);//for the first feature, get the split point.
+      DoubleMatrix feature = db.x.getColumn(f).get(indices);//for the first feature, get the split point.
       double[] data = Arrays.copyOf(feature.data, feature.data.length);
+      //TODO, data should be sort once.
       Arrays.sort(data);
       double preValue = Double.MIN_VALUE;
       //TODO optimize the search, skip some useless features.
@@ -83,6 +84,7 @@ public class Node {
           continue;
         }
         double criterionValue = criterion.getCriterionValue(f, fv);
+        //System.out.println("criterion value: " + criterionValue);
         if (criterionValue > bestCriterion) {
           bestSplitter.setFeatureIndex(f);
           bestSplitter.setFeatureValue(fv);
@@ -102,8 +104,28 @@ public class Node {
     this.leftNode = leftNode;
   }
 
-  public Node splitLeftNode(Splitter splitter ) { return new Node();}
-  public Node splitRightNode(Splitter splitter) { return new Node();}
+  public Node splitLeftNode(Splitter splitter ) {
+    DoubleMatrix xs = db.x.getColumn(splitter.getFeatureIndex());
+    List<Integer> leftIndices = Lists.newArrayList();
+    for(int index : indices) {
+      if(xs.get(index) <= splitter.getFeatureValue()) {
+        leftIndices.add(index);
+      }
+    }
+    int [] leftIndicesArray = ListUtils.toArray(leftIndices);
+    return new Node(leftIndicesArray);
+  }
+  public Node splitRightNode(Splitter splitter) {
+    DoubleMatrix xs = db.x.getColumn(splitter.getFeatureIndex());
+    List<Integer> rightIndices = Lists.newArrayList();
+    for(int index : indices) {
+      if(xs.get(index) > splitter.getFeatureValue()) {
+        rightIndices.add(index);
+      }
+    }
+    int [] rightIndicesArray = ListUtils.toArray(rightIndices);
+    return new Node(rightIndicesArray);
+  }
 
   public Node getRightNode() {
     return rightNode;

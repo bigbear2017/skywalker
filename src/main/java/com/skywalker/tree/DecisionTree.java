@@ -24,6 +24,10 @@ public class DecisionTree {
     pb = OptionParser.parse(new ParamBlock(), args);
   }
 
+  public DecisionTree(ParamBlock pb) {
+    this.pb = pb;
+  }
+
   /**
    * With all the parameters above, fit the data with the model.
    *
@@ -32,7 +36,7 @@ public class DecisionTree {
    */
   public void fit(DoubleMatrix x, DoubleMatrix y) {
     db = new DataBlock(x, y);
-    Node headNode = Node.getHeadNode(pb, db);
+    headNode = Node.getHeadNode(pb, db);
     Queue<Node> curLevelNodes = new LinkedList<Node>();
     curLevelNodes.add(headNode);
     int treeHeight = 0;
@@ -40,9 +44,6 @@ public class DecisionTree {
       Queue<Node> nextLevelNodes = new LinkedList<Node>();
       while (!curLevelNodes.isEmpty()) {
         Node currentNode = curLevelNodes.poll();
-        if (currentNode.getIndices().length < pb.minSamples) {
-          continue;
-        }
         Splitter splitter = currentNode.getBestSplitter();
         Node leftNode = currentNode.splitLeftNode(splitter);
         Node rightNode = currentNode.splitRightNode(splitter);
@@ -67,7 +68,7 @@ public class DecisionTree {
     for( int i = 0; i < numSamplesX; i++ ) {
       while(!node.isLeafNode()) {
         DoubleMatrix xp = xs.getRow(i);
-        if (xp.get(node.getFeatureIndex()) < node.getFeatureValue()) {
+        if (xp.get(node.getFeatureIndex()) <= node.getFeatureValue()) {
           node = node.getLeftNode();
         } else {
           node = node.getRightNode();
@@ -79,7 +80,24 @@ public class DecisionTree {
     return res;
   }
 
-
+  public static void main(String [] args) {
+    ParamBlock pb = new ParamBlock();
+    pb.minSamples = 10;
+    pb.maxHeight = 10;
+    pb.criterion = "mse";
+    DecisionTree tree = new DecisionTree(pb);
+    DoubleMatrix x = DoubleMatrix.randn(1000, 3);
+    DoubleMatrix t = DoubleMatrix.rand(1,3);
+    DoubleMatrix beta = DoubleMatrix.rand(3, 1);
+    DoubleMatrix y = x.mmul(beta);
+    System.out.println(x.toString());
+    System.out.println(y.toString());
+    System.out.println(t.toString());
+    System.out.println(beta.toString());
+    System.out.println(t.mmul(beta));
+    tree.fit(x, y);
+    System.out.println(tree.predict(t));
+  }
   public static class ParamBlock {
     @Option(name = "-minSamples", usage = "the minimum samples for each node")
     public int minSamples;  //mininal samles for each node, default 1

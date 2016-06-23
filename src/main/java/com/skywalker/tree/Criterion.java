@@ -35,6 +35,8 @@ public abstract class Criterion {
 
   public abstract void init( int [] indices );
 
+  public abstract double getLabel();
+
   public static Criterion getCriterion(DecisionTree.ParamBlock pb, DecisionTree.DataBlock db) {
     Criterion.pb = pb;
     Criterion.db = db;
@@ -54,6 +56,14 @@ class MseCriterion extends Criterion {
   double rightSum = 0;
 
   public MseCriterion() {
+  }
+
+  public double getLabel() {
+    double sum = 0;
+    for( int i = 0; i < size; i++ ) {
+      sum += y.get(indices[i]);
+    }
+    return sum / size;
   }
 
   @Override
@@ -81,12 +91,13 @@ class MseCriterion extends Criterion {
   private void updateCounter(int featureIndex, double featureValue) {
     DoubleMatrix xs = x.getColumn(featureIndex);
     for(int i = 0; i < size; i++) {
-      if( xs.get(i) <= featureValue ) {
+      int index = indices[i];
+      if( xs.get(index) <= featureValue ) {
         leftCounter += 1;
-        leftSum += y.get(i);
+        leftSum += y.get(index);
       } else {
         rightCounter += 1;
-        rightSum += y.get(i);
+        rightSum += y.get(index);
       }
     }
   }
@@ -94,13 +105,16 @@ class MseCriterion extends Criterion {
   private double calcCriterion(int featureIndex, double featureValue) {
     double criterion = 0;
     DoubleMatrix xs = x.getColumn(featureIndex);
+    System.out.println(xs);
+    System.out.println(featureValue);
     double leftAvg = leftSum / leftCounter;
     double rightAvg = rightSum / rightCounter;
     for(int i = 0; i < size; i++) {
-      if( xs.get(i) <= featureValue ) {
-        criterion += (y.get(i) - leftAvg) * (y.get(i) - leftAvg);
+      int index = indices[i];
+      if( xs.get(index) <= featureValue ) {
+        criterion += (y.get(index) - leftAvg) * (y.get(index) - leftAvg);
       } else {
-        criterion += (y.get(i) - rightAvg) * (y.get(i) - rightAvg);
+        criterion += (y.get(index) - rightAvg) * (y.get(index) - rightAvg);
       }
     }
     return criterion;
@@ -109,6 +123,10 @@ class MseCriterion extends Criterion {
 }
 
 class GiniCriterion extends Criterion {
+  @Override
+  public double getLabel() {
+    return 0;
+  }
 
   @Override
   public void init(int[] indices) {
@@ -149,6 +167,11 @@ class MissClassCriterion extends Criterion {
   }
 
   @Override
+  public double getLabel() {
+    return 0;
+  }
+
+  @Override
   public double getCriterionValue(int featureIndex, double featureValue) {
     clearValue();
     updateLabel(featureIndex, featureValue);
@@ -167,8 +190,9 @@ class MissClassCriterion extends Criterion {
     Map<Integer, Integer> leftDict = Maps.newHashMap();
     Map<Integer, Integer> rightDict = Maps.newHashMap();
     for(int i = 0; i < size; i++) {
-      Integer key = wrapperValue(y.get(i));
-      if( xs.get(i) <= featureValue ) {
+      int index = indices[i];
+      Integer key = wrapperValue(y.get(index));
+      if( xs.get(index) <= featureValue ) {
         leftCounter += 1;
         MapUtils.incrementMap(leftDict, key, 1);
       } else {
