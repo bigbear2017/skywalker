@@ -35,7 +35,7 @@ public abstract class Criterion {
 
   public abstract void init( int [] indices );
 
-  public abstract double getLabel();
+  public abstract double getLabel(int [] indices);
 
   public static Criterion getCriterion(DecisionTree.ParamBlock pb, DecisionTree.DataBlock db) {
     Criterion.pb = pb;
@@ -58,12 +58,9 @@ class MseCriterion extends Criterion {
   public MseCriterion() {
   }
 
-  public double getLabel() {
-    double sum = 0;
-    for( int i = 0; i < size; i++ ) {
-      sum += y.get(indices[i]);
-    }
-    return sum / size;
+  @Override
+  public double getLabel(int [] indices) {
+    return y.get(indices).mean();
   }
 
   @Override
@@ -105,8 +102,6 @@ class MseCriterion extends Criterion {
   private double calcCriterion(int featureIndex, double featureValue) {
     double criterion = 0;
     DoubleMatrix xs = x.getColumn(featureIndex);
-    System.out.println(xs);
-    System.out.println(featureValue);
     double leftAvg = leftSum / leftCounter;
     double rightAvg = rightSum / rightCounter;
     for(int i = 0; i < size; i++) {
@@ -124,7 +119,7 @@ class MseCriterion extends Criterion {
 
 class GiniCriterion extends Criterion {
   @Override
-  public double getLabel() {
+  public double getLabel(int [] indices) {
     return 0;
   }
 
@@ -167,7 +162,7 @@ class MissClassCriterion extends Criterion {
   }
 
   @Override
-  public double getLabel() {
+  public double getLabel(int [] indices) {
     return 0;
   }
 

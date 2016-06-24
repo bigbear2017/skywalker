@@ -64,27 +64,24 @@ public class Node {
   }
 
   public double getLabel() {
-    System.out.println(db.y.get(indices) + " " + indices.length);
-    return criterion.getLabel();
+    return criterion.getLabel(indices);
   }
 
   public Splitter getBestSplitter() {
     Splitter bestSplitter = new Splitter();
     criterion.init(indices);
-    double bestCriterion = Double.MIN_VALUE;
+    double bestCriterion = -Double.MAX_VALUE;
     for (int f = 0; f < db.featureSize; f++ ) {
       DoubleMatrix feature = db.x.getColumn(f).get(indices);//for the first feature, get the split point.
-      double[] data = Arrays.copyOf(feature.data, feature.data.length);
-      //TODO, data should be sort once.
+      double [] data = Arrays.copyOf(feature.data, feature.data.length);
       Arrays.sort(data);
-      double preValue = Double.MIN_VALUE;
+      double preValue = -Double.MAX_VALUE;
       //TODO optimize the search, skip some useless features.
       for(double fv : data) {
         if( fv == preValue ) {
           continue;
         }
         double criterionValue = criterion.getCriterionValue(f, fv);
-        //System.out.println("criterion value: " + criterionValue);
         if (criterionValue > bestCriterion) {
           bestSplitter.setFeatureIndex(f);
           bestSplitter.setFeatureValue(fv);
