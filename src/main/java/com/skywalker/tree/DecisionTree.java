@@ -63,11 +63,11 @@ public class DecisionTree {
 
   public DoubleMatrix predict(DoubleMatrix xs) {
     int numSamplesX = xs.rows;
-    Node node = headNode;
     DoubleMatrix res = DoubleMatrix.ones(numSamplesX);
     for( int i = 0; i < numSamplesX; i++ ) {
+      Node node = headNode;
+      DoubleMatrix xp = xs.getRow(i);
       while(!node.isLeafNode()) {
-        DoubleMatrix xp = xs.getRow(i);
         if (xp.get(node.getFeatureIndex()) <= node.getFeatureValue()) {
           node = node.getLeftNode();
         } else {
@@ -80,23 +80,45 @@ public class DecisionTree {
     return res;
   }
 
+  public void printTree() {
+    Node node = headNode;
+    printNode(node);
+  }
+
+  private void printNode(Node node) {
+    if( node != null  ) {
+      if( !node.isLeafNode()) {
+        System.out.println("Split Index:" + node.getFeatureIndex() + " Split Value:" + node.getFeatureValue()
+                + " node size :" + node.getNumSamples());
+        printNode(node.getLeftNode());
+        printNode(node.getRightNode());
+      } else {
+        System.out.println("Leaf value:" + node.getLabel());
+      }
+    }
+  }
+
   public static void main(String [] args) {
     ParamBlock pb = new ParamBlock();
-    pb.minSamples = 10;
-    pb.maxHeight = 4;
+    pb.minSamples = 2;
+    pb.maxHeight = 7;
     pb.criterion = "mse";
     DecisionTree tree = new DecisionTree(pb);
-    DoubleMatrix x = DoubleMatrix.randn(100000, 100);
-    DoubleMatrix t = DoubleMatrix.rand(1,100);
-    DoubleMatrix beta = DoubleMatrix.rand(100, 1);
+    int dimension = 10;
+    int samples = 1000;
+    int testSamples = 10;
+    DoubleMatrix x = DoubleMatrix.rand(samples, dimension);
+    DoubleMatrix t = DoubleMatrix.rand(testSamples, dimension);
+    DoubleMatrix beta = DoubleMatrix.rand(dimension, 1);
     DoubleMatrix y = x.mmul(beta);
-    //System.out.println(x.toString());
-    //System.out.println(y.toString());
-    //System.out.println(t.toString());
-    //System.out.println(beta.toString());
-    System.out.println(t.mmul(beta));
+    DoubleMatrix ty = t.mmul(beta);
     tree.fit(x, y);
-    System.out.println(tree.predict(t));
+    DoubleMatrix py = tree.predict(t);
+    DoubleMatrix pt = py.sub(ty);
+    double mse = pt.mul(pt).sum()/testSamples;
+    System.out.println(ty);
+    System.out.println(py);
+    System.out.println("Mse : " + mse);
   }
   public static class ParamBlock {
     @Option(name = "-minSamples", usage = "the minimum samples for each node")

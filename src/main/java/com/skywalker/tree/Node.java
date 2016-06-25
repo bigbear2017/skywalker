@@ -1,10 +1,8 @@
 package com.skywalker.tree;
 
 import com.google.common.collect.Lists;
-import com.skywalker.utils.DoubleUtils;
 import com.skywalker.utils.ListUtils;
 import com.skywalker.utils.Tuple;
-import gnu.trove.TLongHashSet;
 import org.jblas.DoubleMatrix;
 
 import java.util.List;

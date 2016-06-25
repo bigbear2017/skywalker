@@ -50,60 +50,77 @@ public abstract class Criterion {
 class MseCriterion extends Criterion {
   protected DoubleMatrix y;
   protected DoubleMatrix x;
-  protected DoubleMatrix ysort;
-  protected DoubleMatrix xsort;
+  protected DoubleMatrix ySort;
+  protected DoubleMatrix xSort;
   protected int [] indices;
   protected int size;
 
-  int leftCounter = 0;
-  int rightCounter = 0;
-  double leftSum = 0;
-  double rightSum = 0;
+  double leftY2 = 0;
+  double leftY1 = 0;
+  int leftNum = 0;
+  int rightNum = 0;
+  double rightY2 = 0;
+  double rightY1 = 0;
+  double leftAvg = 0;
+  double rightAvg = 0;
 
   public MseCriterion() {
   }
 
-  @Override
-  public Tuple<Double, Double> getBestSplitValue(int featureIndex) {
+  protected void createInstance(int featureIndex) {
     DoubleMatrix xf = x.getColumn(featureIndex).get(indices);
     DoubleMatrix yf = y.get(indices);
     int [] sortIndices = xf.sortingPermutation();
-    xsort = xf.get(sortIndices);
-    ysort = yf.get(sortIndices);
-    int length = indices.length;
-    double pre = xsort.get(0);
+    xSort = xf.get(sortIndices);
+    ySort = yf.get(sortIndices);
+
+    leftY2 = 0;
+    leftY1 = 0;
+    leftNum = 0;
+    leftAvg = 0;
+
+    rightY2 = yf.mul(yf).sum();
+    rightY1 = yf.sum();
+    rightNum = indices.length;
+    rightAvg = 0;
+  }
+
+  protected void updateInstance(double yi) {
+    leftY2 += yi * yi;
+    leftY1 += yi;
+    leftNum += 1;
+
+    rightY2 -= yi * yi;
+    rightY1 -= yi;
+    rightNum -= 1;
+  }
+
+  protected double calcInstance() {
+    leftAvg = leftY1 / leftNum;
+    rightAvg = rightY1 / rightNum;
+    double leftAvg2 = leftAvg * leftAvg;
+    double rightAvg2 = rightAvg * rightAvg;
+    double criterion = leftY2 + leftNum * leftAvg2 - 2 * leftAvg * leftY1;
+    criterion += rightY2 + rightNum * rightAvg2 - 2 * rightAvg * rightY1;
+    return -criterion;
+  }
+
+  @Override
+  public Tuple<Double, Double> getBestSplitValue(int featureIndex) {
+    createInstance(featureIndex);
+    double pre = xSort.get(0);
     double bestCriterionValue = -Double.MAX_VALUE;
     double bestFeatureSplit = Double.MIN_VALUE;
-
-    double lefty2 = 0;
-    double lefty1 = 0;
-    int leftNum = 0;
-    int rightNum = indices.length;
-    double righty2 = yf.mul(yf).sum();
-    double righty1 = yf.sum();
-    double leftAvg = 0;
-    double rightAvg = 0;
-    for(int i = 1; i < length; i++) {
-      double v = xsort.get(i);
-      double yi = ysort.get(i-1);
+    for(int i = 1; i < size; i++) {
+      double v = xSort.get(i);
+      double yi = ySort.get(i-1);
+      updateInstance(yi);
+      //find all the samples that have the same value,
+      //then we calculate the criterion.
       if( v == pre ) {
         continue;
       }
-      lefty2 += yi * yi;
-      lefty1 += yi;
-      leftNum += 1;
-      leftAvg = lefty1 / leftNum;
-      double leftAvg2 = leftAvg * leftAvg;
-
-      righty2 -= yi * yi;
-      righty1 -= yi;
-      rightNum -= 1;
-      rightAvg = righty1 / rightNum;
-      double rightAvg2 = rightAvg * rightAvg;
-
-      double criterion = lefty2 + leftNum * leftAvg2 - 2 * leftNum * leftAvg * lefty1;
-      criterion += righty2 + rightNum * rightAvg2 - 2 * rightNum * rightAvg * righty1;
-      criterion = - criterion;
+      double criterion = calcInstance();
       if( criterion > bestCriterionValue ) {
         bestCriterionValue = criterion;
         bestFeatureSplit = pre;
@@ -111,6 +128,7 @@ class MseCriterion extends Criterion {
       pre = v;
     }
 
+    System.out.println(bestCriterionValue);
     return new Tuple(bestCriterionValue, bestFeatureSplit);
   }
 
@@ -129,46 +147,7 @@ class MseCriterion extends Criterion {
 
   @Override
   public double getCriterionValue(int featureIndex, double featureValue) {
-    clearValue();
-    updateCounter(featureIndex, featureValue);
-    return -1 * calcCriterion(featureIndex, featureValue);
-  }
-
-  private void clearValue() {
-    leftCounter = 0;
-    rightCounter = 0;
-    leftSum = 0;
-    rightSum = 0;
-  }
-
-  private void updateCounter(int featureIndex, double featureValue) {
-    DoubleMatrix xs = x.getColumn(featureIndex);
-    for(int i = 0; i < size; i++) {
-      int index = indices[i];
-      if( xs.get(index) <= featureValue ) {
-        leftCounter += 1;
-        leftSum += y.get(index);
-      } else {
-        rightCounter += 1;
-        rightSum += y.get(index);
-      }
-    }
-  }
-
-  private double calcCriterion(int featureIndex, double featureValue) {
-    double criterion = 0;
-    DoubleMatrix xs = x.getColumn(featureIndex);
-    double leftAvg = leftSum / leftCounter;
-    double rightAvg = rightSum / rightCounter;
-    for(int i = 0; i < size; i++) {
-      int index = indices[i];
-      if( xs.get(index) <= featureValue ) {
-        criterion += (y.get(index) - leftAvg) * (y.get(index) - leftAvg);
-      } else {
-        criterion += (y.get(index) - rightAvg) * (y.get(index) - rightAvg);
-      }
-    }
-    return criterion;
+    return 0;
   }
 
 }

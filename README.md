@@ -1,5 +1,5 @@
 ## What is skywalker
-  In this project, I hope those algorithms could be implemented. The first language is Java, then C++ and python.
+  In this project, I hope those algorithms could be implemented. The first language is Java.
 
 ### Decision Tree
 ### GBM
@@ -12,4 +12,3 @@
 ### CF Item based
 ### Matrix Factorization
 ### libFM
-
