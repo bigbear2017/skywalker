@@ -1,13 +1,13 @@
 package com.skywalker.tree;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.skywalker.utils.DoubleUtils;
 import com.skywalker.utils.ListUtils;
+import com.skywalker.utils.Tuple;
+import gnu.trove.TLongHashSet;
 import org.jblas.DoubleMatrix;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This class define the node of decision tree.
@@ -72,22 +72,11 @@ public class Node {
     criterion.init(indices);
     double bestCriterion = -Double.MAX_VALUE;
     for (int f = 0; f < db.featureSize; f++ ) {
-      DoubleMatrix feature = db.x.getColumn(f).get(indices);//for the first feature, get the split point.
-      double [] data = Arrays.copyOf(feature.data, feature.data.length);
-      Arrays.sort(data);
-      double preValue = -Double.MAX_VALUE;
-      //TODO optimize the search, skip some useless features.
-      for(double fv : data) {
-        if( fv == preValue ) {
-          continue;
-        }
-        double criterionValue = criterion.getCriterionValue(f, fv);
-        if (criterionValue > bestCriterion) {
-          bestSplitter.setFeatureIndex(f);
-          bestSplitter.setFeatureValue(fv);
-          bestCriterion = criterionValue;
-          preValue = fv;
-        }
+      Tuple<Double, Double> split = criterion.getBestSplitValue(f);
+      if( split.first() > bestCriterion ) {
+        bestCriterion = split.first();
+        bestSplitter.setFeatureIndex(f);
+        bestSplitter.setFeatureValue(split.second());
       }
     }
     return bestSplitter;

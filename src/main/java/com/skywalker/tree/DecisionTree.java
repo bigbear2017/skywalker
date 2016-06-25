@@ -83,17 +83,17 @@ public class DecisionTree {
   public static void main(String [] args) {
     ParamBlock pb = new ParamBlock();
     pb.minSamples = 10;
-    pb.maxHeight = 7;
+    pb.maxHeight = 4;
     pb.criterion = "mse";
     DecisionTree tree = new DecisionTree(pb);
-    DoubleMatrix x = DoubleMatrix.randn(2000, 3);
-    DoubleMatrix t = DoubleMatrix.rand(1,3);
-    DoubleMatrix beta = DoubleMatrix.rand(3, 1);
+    DoubleMatrix x = DoubleMatrix.randn(100000, 100);
+    DoubleMatrix t = DoubleMatrix.rand(1,100);
+    DoubleMatrix beta = DoubleMatrix.rand(100, 1);
     DoubleMatrix y = x.mmul(beta);
-    System.out.println(x.toString());
-    System.out.println(y.toString());
-    System.out.println(t.toString());
-    System.out.println(beta.toString());
+    //System.out.println(x.toString());
+    //System.out.println(y.toString());
+    //System.out.println(t.toString());
+    //System.out.println(beta.toString());
     System.out.println(t.mmul(beta));
     tree.fit(x, y);
     System.out.println(tree.predict(t));
@@ -112,14 +112,12 @@ public class DecisionTree {
   public static class DataBlock {
     public final DoubleMatrix x;
     public final DoubleMatrix y;
-    public final DoubleMatrix xsort;
     public final int featureSize;
     public final int totalSamples;
 
     public DataBlock(DoubleMatrix x, DoubleMatrix y) {
       this.x = x;
       this.y = y;
-      this.xsort = x.sortColumns();
       this.featureSize = x.columns;
       this.totalSamples = x.rows;
     }

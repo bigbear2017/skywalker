@@ -2,6 +2,7 @@ package com.skywalker.tree;
 
 import com.google.common.collect.Maps;
 import com.skywalker.utils.MapUtils;
+import com.skywalker.utils.Tuple;
 import org.jblas.DoubleMatrix;
 
 import java.util.HashMap;
@@ -33,6 +34,8 @@ public abstract class Criterion {
    */
   public abstract double getCriterionValue(int featureIndex, double featureValue);
 
+  public abstract Tuple<Double, Double> getBestSplitValue(int featureIndex);
+
   public abstract void init( int [] indices );
 
   public abstract double getLabel(int [] indices);
@@ -47,6 +50,8 @@ public abstract class Criterion {
 class MseCriterion extends Criterion {
   protected DoubleMatrix y;
   protected DoubleMatrix x;
+  protected DoubleMatrix ysort;
+  protected DoubleMatrix xsort;
   protected int [] indices;
   protected int size;
 
@@ -56,6 +61,57 @@ class MseCriterion extends Criterion {
   double rightSum = 0;
 
   public MseCriterion() {
+  }
+
+  @Override
+  public Tuple<Double, Double> getBestSplitValue(int featureIndex) {
+    DoubleMatrix xf = x.getColumn(featureIndex).get(indices);
+    DoubleMatrix yf = y.get(indices);
+    int [] sortIndices = xf.sortingPermutation();
+    xsort = xf.get(sortIndices);
+    ysort = yf.get(sortIndices);
+    int length = indices.length;
+    double pre = xsort.get(0);
+    double bestCriterionValue = -Double.MAX_VALUE;
+    double bestFeatureSplit = Double.MIN_VALUE;
+
+    double lefty2 = 0;
+    double lefty1 = 0;
+    int leftNum = 0;
+    int rightNum = indices.length;
+    double righty2 = yf.mul(yf).sum();
+    double righty1 = yf.sum();
+    double leftAvg = 0;
+    double rightAvg = 0;
+    for(int i = 1; i < length; i++) {
+      double v = xsort.get(i);
+      double yi = ysort.get(i-1);
+      if( v == pre ) {
+        continue;
+      }
+      lefty2 += yi * yi;
+      lefty1 += yi;
+      leftNum += 1;
+      leftAvg = lefty1 / leftNum;
+      double leftAvg2 = leftAvg * leftAvg;
+
+      righty2 -= yi * yi;
+      righty1 -= yi;
+      rightNum -= 1;
+      rightAvg = righty1 / rightNum;
+      double rightAvg2 = rightAvg * rightAvg;
+
+      double criterion = lefty2 + leftNum * leftAvg2 - 2 * leftNum * leftAvg * lefty1;
+      criterion += righty2 + rightNum * rightAvg2 - 2 * rightNum * rightAvg * righty1;
+      criterion = - criterion;
+      if( criterion > bestCriterionValue ) {
+        bestCriterionValue = criterion;
+        bestFeatureSplit = pre;
+      }
+      pre = v;
+    }
+
+    return new Tuple(bestCriterionValue, bestFeatureSplit);
   }
 
   @Override
@@ -125,6 +181,11 @@ class GiniCriterion extends Criterion {
 
   @Override
   public void init(int[] indices) {
+  }
+
+  @Override
+  public Tuple<Double, Double> getBestSplitValue(int featureIndex) {
+    return new Tuple(0, 0);
   }
 
   @Override
@@ -201,6 +262,11 @@ class MissClassCriterion extends Criterion {
     rightList = MapUtils.sortMapByValue(rightDict);
     rightLabel = unwrapperValue(rightList.get(0).getKey());
     rightCorrect = rightList.get(0).getValue();
+  }
+
+  @Override
+  public Tuple<Double, Double> getBestSplitValue(int featureIndex) {
+    return new Tuple(0, 0);
   }
 
   private int wrapperValue(double yi) {

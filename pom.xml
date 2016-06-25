@@ -107,5 +107,10 @@
       <version>2.6.0-cdh5.5.0</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>trove</groupId>
+      <artifactId>trove</artifactId>
+      <version>1.0.2</version>
+    </dependency>
   </dependencies>
 </project>
