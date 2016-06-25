@@ -26,9 +26,6 @@ public abstract class Criterion {
 
   public abstract Tuple<Double, Double> getBestSplitValue(int featureIndex);
 
-  public abstract int [] getLeftIndices();
-  public abstract int [] getRightIndices();
-
   public abstract void init( int [] indices );
 
   public abstract double getLabel(int [] indices);
@@ -48,7 +45,6 @@ class MseCriterion extends Criterion {
   protected int [] indices;
   protected int [] sortIndices;
   protected int size;
-  int bestIndex;
 
   double leftY2 = 0;
   double leftY1 = 0;
@@ -119,7 +115,6 @@ class MseCriterion extends Criterion {
       if( criterion > bestCriterionValue ) {
         bestCriterionValue = criterion;
         bestFeatureSplit = pre;
-        bestIndex = i-1;
       }
       pre = v;
     }
@@ -130,22 +125,6 @@ class MseCriterion extends Criterion {
   @Override
   public double getLabel(int [] indices) {
     return y.get(indices).mean();
-  }
-
-  @Override
-  public int[] getLeftIndices() {
-    int leftSize = bestIndex + 1;
-    int [] leftIndices = new int[leftSize];
-    System.arraycopy(sortIndices, 0, leftIndices, 0, leftSize);
-    return leftIndices;
-  }
-
-  @Override
-  public int[] getRightIndices() {
-    int rightSize = size - bestIndex - 1;
-    int [] rightIndices = new int[rightSize];
-    System.arraycopy(sortIndices, bestIndex + 1, rightIndices, 0, rightSize);
-    return rightIndices;
   }
 
   @Override
@@ -171,16 +150,6 @@ class GiniCriterion extends Criterion {
   public Tuple<Double, Double> getBestSplitValue(int featureIndex) {
     return new Tuple(0, 0);
   }
-
-  @Override
-  public int[] getLeftIndices() {
-    return new int[0];
-  }
-
-  @Override
-  public int[] getRightIndices() {
-    return new int[0];
-  }
 }
 
 
@@ -205,16 +174,6 @@ class MissClassCriterion extends Criterion {
   @Override
   public double getLabel(int [] indices) {
     return 0;
-  }
-
-  @Override
-  public int[] getLeftIndices() {
-    return new int[0];
-  }
-
-  @Override
-  public int[] getRightIndices() {
-    return new int[0];
   }
 
   @Override

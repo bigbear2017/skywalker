@@ -75,8 +75,6 @@ public class Node {
         bestCriterion = split.first();
         bestSplitter.setFeatureIndex(f);
         bestSplitter.setFeatureValue(split.second());
-        bestSplitter.setLeftIndices(criterion.getLeftIndices());
-        bestSplitter.setRightIndices(criterion.getRightIndices());
       }
     }
     return bestSplitter;
@@ -92,28 +90,28 @@ public class Node {
 
 
   public Node splitLeftNode(Splitter splitter ) {
-    return new Node(splitter.getLeftIndices());
+    DoubleMatrix xs = db.x.getColumn(splitter.getFeatureIndex());
+    List<Integer> leftIndices = Lists.newArrayList();
+    for(int index : indices) {
+      if(xs.get(index) <= splitter.getFeatureValue()) {
+        leftIndices.add(index);
+      }
+    }
+    int [] leftIndicesArray = ListUtils.toArray(leftIndices);
+    return new Node(leftIndicesArray);
   }
 
-  /**
-   *  Before this, I use another naive method to split the node.
-   *  Scan the feature and split the indices. Later, I use this method.
-   *  I think this could be a little faster. So, I keep the code here.
-   *  Maybe I can find a better way to split the node.
-   * @param splitter
-   * @return
-   */
+
   public Node splitRightNode(Splitter splitter) {
-/*    DoubleMatrix xs = db.x.getColumn(splitter.getFeatureIndex());
+    DoubleMatrix xs = db.x.getColumn(splitter.getFeatureIndex());
     List<Integer> rightIndices = Lists.newArrayList();
     for(int index : indices) {
       if(xs.get(index) > splitter.getFeatureValue()) {
         rightIndices.add(index);
       }
     }
-    int [] rightIndicesArray = ListUtils.toArray(rightIndices);*/
-    //return new Node(rightIndicesArray);
-    return new Node(splitter.getRightIndices());
+    int [] rightIndicesArray = ListUtils.toArray(rightIndices);
+    return new Node(rightIndicesArray);
   }
 
   public Node getRightNode() {
