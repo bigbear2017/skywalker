@@ -12,6 +12,24 @@ package com.skywalker.tree;
 public class Splitter {
   private int featureIndex;
   private double featureValue;
+  private int [] leftIndices;
+  private int [] rightIndices;
+
+  public int[] getLeftIndices() {
+    return leftIndices;
+  }
+
+  public void setLeftIndices(int[] leftIndices) {
+    this.leftIndices = leftIndices;
+  }
+
+  public int[] getRightIndices() {
+    return rightIndices;
+  }
+
+  public void setRightIndices(int[] rightIndices) {
+    this.rightIndices = rightIndices;
+  }
 
   public int getFeatureIndex() {
     return featureIndex;

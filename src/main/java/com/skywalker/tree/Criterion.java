@@ -1,12 +1,9 @@
 package com.skywalker.tree;
 
-import com.google.common.collect.Maps;
-import com.skywalker.utils.MapUtils;
 import com.skywalker.utils.Tuple;
 import org.jblas.DoubleMatrix;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,14 +24,10 @@ public abstract class Criterion {
   protected static DecisionTree.ParamBlock pb = null;
   protected static DecisionTree.DataBlock db = null;
 
-  /**
-   * Given an index, return current criterion value
-   * @param featureValue the feature value to split current node
-   * @return criterion value
-   */
-  public abstract double getCriterionValue(int featureIndex, double featureValue);
-
   public abstract Tuple<Double, Double> getBestSplitValue(int featureIndex);
+
+  public abstract int [] getLeftIndices();
+  public abstract int [] getRightIndices();
 
   public abstract void init( int [] indices );
 
@@ -53,7 +46,9 @@ class MseCriterion extends Criterion {
   protected DoubleMatrix ySort;
   protected DoubleMatrix xSort;
   protected int [] indices;
+  protected int [] sortIndices;
   protected int size;
+  int bestIndex;
 
   double leftY2 = 0;
   double leftY1 = 0;
@@ -70,7 +65,7 @@ class MseCriterion extends Criterion {
   protected void createInstance(int featureIndex) {
     DoubleMatrix xf = x.getColumn(featureIndex).get(indices);
     DoubleMatrix yf = y.get(indices);
-    int [] sortIndices = xf.sortingPermutation();
+    sortIndices = xf.sortingPermutation();
     xSort = xf.get(sortIndices);
     ySort = yf.get(sortIndices);
 
@@ -124,11 +119,11 @@ class MseCriterion extends Criterion {
       if( criterion > bestCriterionValue ) {
         bestCriterionValue = criterion;
         bestFeatureSplit = pre;
+        bestIndex = i-1;
       }
       pre = v;
     }
 
-    System.out.println(bestCriterionValue);
     return new Tuple(bestCriterionValue, bestFeatureSplit);
   }
 
@@ -138,18 +133,28 @@ class MseCriterion extends Criterion {
   }
 
   @Override
+  public int[] getLeftIndices() {
+    int leftSize = bestIndex + 1;
+    int [] leftIndices = new int[leftSize];
+    System.arraycopy(sortIndices, 0, leftIndices, 0, leftSize);
+    return leftIndices;
+  }
+
+  @Override
+  public int[] getRightIndices() {
+    int rightSize = size - bestIndex - 1;
+    int [] rightIndices = new int[rightSize];
+    System.arraycopy(sortIndices, bestIndex + 1, rightIndices, 0, rightSize);
+    return rightIndices;
+  }
+
+  @Override
   public void init( int [] indices ) {
     this.indices = indices;
     this.size = indices.length;
     this.y = db.y;
     this.x = db.x;
   }
-
-  @Override
-  public double getCriterionValue(int featureIndex, double featureValue) {
-    return 0;
-  }
-
 }
 
 class GiniCriterion extends Criterion {
@@ -168,8 +173,13 @@ class GiniCriterion extends Criterion {
   }
 
   @Override
-  public double getCriterionValue(int featureIndex, double featureValue) {
-    return 0;
+  public int[] getLeftIndices() {
+    return new int[0];
+  }
+
+  @Override
+  public int[] getRightIndices() {
+    return new int[0];
   }
 }
 
@@ -183,15 +193,6 @@ class MissClassCriterion extends Criterion {
   protected DoubleMatrix x;
   protected int [] indices;
   protected int size;
-
-  double leftLabel;
-  double rightLabel;
-  int leftCounter;
-  int rightCounter;
-  int leftCorrect;
-  int rightCorrect;
-  List<Map.Entry<Integer,Integer>> leftList;
-  List<Map.Entry<Integer,Integer>> rightList;
 
   @Override
   public void init(int[] indices) {
@@ -207,60 +208,18 @@ class MissClassCriterion extends Criterion {
   }
 
   @Override
-  public double getCriterionValue(int featureIndex, double featureValue) {
-    clearValue();
-    updateLabel(featureIndex, featureValue);
-    return -1 * calcCriterion(featureIndex, featureValue);
+  public int[] getLeftIndices() {
+    return new int[0];
   }
 
-  private void clearValue() {
-    leftCounter = 0;
-    rightCounter = 0;
-    leftLabel = 0;
-    rightLabel = 0;
-  }
-
-  private void updateLabel(int featureIndex, double featureValue) {
-    DoubleMatrix xs = x.getColumn(featureIndex);
-    Map<Integer, Integer> leftDict = Maps.newHashMap();
-    Map<Integer, Integer> rightDict = Maps.newHashMap();
-    for(int i = 0; i < size; i++) {
-      int index = indices[i];
-      Integer key = wrapperValue(y.get(index));
-      if( xs.get(index) <= featureValue ) {
-        leftCounter += 1;
-        MapUtils.incrementMap(leftDict, key, 1);
-      } else {
-        rightCounter += 1;
-        MapUtils.incrementMap(rightDict, key, 1);
-      }
-    }
-    leftList = MapUtils.sortMapByValue(leftDict);
-    leftLabel = unwrapperValue(leftList.get(0).getKey());
-    leftCorrect = leftList.get(0).getValue();
-    rightList = MapUtils.sortMapByValue(rightDict);
-    rightLabel = unwrapperValue(rightList.get(0).getKey());
-    rightCorrect = rightList.get(0).getValue();
+  @Override
+  public int[] getRightIndices() {
+    return new int[0];
   }
 
   @Override
   public Tuple<Double, Double> getBestSplitValue(int featureIndex) {
     return new Tuple(0, 0);
-  }
-
-  private int wrapperValue(double yi) {
-    return (int) (yi * 10);
-  }
-
-  private double unwrapperValue(int yi) {
-    return yi * 1.0 / 10;
-  }
-
-  protected double calcCriterion(int featureIndex, double featureValue) {
-    double criterion = 0;
-    criterion += ( 1 - leftCorrect * 1.0  / leftCounter );
-    criterion += ( 1- rightCorrect * 1.0 / rightCounter );
-    return criterion;
   }
 
 }
