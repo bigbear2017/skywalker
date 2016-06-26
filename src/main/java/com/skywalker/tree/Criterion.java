@@ -1,5 +1,8 @@
 package com.skywalker.tree;
 
+import com.google.common.collect.Maps;
+import com.skywalker.utils.DoubleUtils;
+import com.skywalker.utils.MapUtils;
 import com.skywalker.utils.Tuple;
 import org.jblas.DoubleMatrix;
 
@@ -18,15 +21,65 @@ public abstract class Criterion {
   static {
     criterionMap.put("mse", new MseCriterion());
     criterionMap.put("gini", new GiniCriterion());
-    criterionMap.put("miss", new MissClassCriterion());
+    criterionMap.put("miss", new MissClassifyCriterion());
+    criterionMap.put("cross", new CrossEntropyCriterion());
   }
 
   protected static DecisionTree.ParamBlock pb = null;
   protected static DecisionTree.DataBlock db = null;
 
-  public abstract Tuple<Double, Double> getBestSplitValue(int featureIndex);
+  protected DoubleMatrix y;
+  protected DoubleMatrix x;
+  protected int [] indices;
+  protected int size;
 
-  public abstract void init( int [] indices );
+  protected DoubleMatrix ySort;
+  protected DoubleMatrix xSort;
+  protected int [] sortIndices;
+
+  public void init(int[] indices, int featureIndex) {
+    this.indices = indices;
+    this.size = indices.length;
+    this.y = db.y;
+    this.x = db.x;
+    DoubleMatrix xf = x.getColumn(featureIndex).get(indices);
+    DoubleMatrix yf = y.get(indices);
+    this.sortIndices = xf.sortingPermutation();
+    this.xSort = xf.get(sortIndices);
+    this.ySort = yf.get(sortIndices);
+  }
+
+  abstract protected void createInstance();
+
+  abstract protected void updateInstance(double yi);
+
+  abstract protected double calcInstance();
+
+  public Tuple<Double, Double> getBestSplitValue(int [] indices, int featureIndex) {
+    init(indices, featureIndex);
+    createInstance();
+    double pre = xSort.get(0);
+    double bestCriterionValue = Double.MAX_VALUE;
+    double bestFeatureSplit = Double.MAX_VALUE;
+    for(int i = 1; i < size; i++) {
+      double v = xSort.get(i);
+      double yi = ySort.get(i-1);
+      updateInstance(yi);
+      //find all the samples that have the same value,
+      //then we calculate the criterion.
+      if( v == pre ) {
+        continue;
+      }
+      double criterion = calcInstance();
+      if( criterion < bestCriterionValue ) {
+        bestCriterionValue = criterion;
+        bestFeatureSplit = pre;
+      }
+      pre = v;
+    }
+
+    return new Tuple(bestCriterionValue, bestFeatureSplit);
+  }
 
   public abstract double getLabel(int [] indices);
 
@@ -38,14 +91,6 @@ public abstract class Criterion {
 }
 
 class MseCriterion extends Criterion {
-  protected DoubleMatrix y;
-  protected DoubleMatrix x;
-  protected DoubleMatrix ySort;
-  protected DoubleMatrix xSort;
-  protected int [] indices;
-  protected int [] sortIndices;
-  protected int size;
-
   double leftY2 = 0;
   double leftY1 = 0;
   int leftNum = 0;
@@ -58,20 +103,14 @@ class MseCriterion extends Criterion {
   public MseCriterion() {
   }
 
-  protected void createInstance(int featureIndex) {
-    DoubleMatrix xf = x.getColumn(featureIndex).get(indices);
-    DoubleMatrix yf = y.get(indices);
-    sortIndices = xf.sortingPermutation();
-    xSort = xf.get(sortIndices);
-    ySort = yf.get(sortIndices);
-
+  protected void createInstance() {
     leftY2 = 0;
     leftY1 = 0;
     leftNum = 0;
     leftAvg = 0;
 
-    rightY2 = yf.mul(yf).sum();
-    rightY1 = yf.sum();
+    rightY2 = ySort.mul(ySort).sum();
+    rightY1 = ySort.sum();
     rightNum = indices.length;
     rightAvg = 0;
   }
@@ -93,93 +132,112 @@ class MseCriterion extends Criterion {
     double rightAvg2 = rightAvg * rightAvg;
     double criterion = leftY2 + leftNum * leftAvg2 - 2 * leftAvg * leftY1;
     criterion += rightY2 + rightNum * rightAvg2 - 2 * rightAvg * rightY1;
-    return -criterion;
-  }
-
-  @Override
-  public Tuple<Double, Double> getBestSplitValue(int featureIndex) {
-    createInstance(featureIndex);
-    double pre = xSort.get(0);
-    double bestCriterionValue = -Double.MAX_VALUE;
-    double bestFeatureSplit = Double.MIN_VALUE;
-    for(int i = 1; i < size; i++) {
-      double v = xSort.get(i);
-      double yi = ySort.get(i-1);
-      updateInstance(yi);
-      //find all the samples that have the same value,
-      //then we calculate the criterion.
-      if( v == pre ) {
-        continue;
-      }
-      double criterion = calcInstance();
-      if( criterion > bestCriterionValue ) {
-        bestCriterionValue = criterion;
-        bestFeatureSplit = pre;
-      }
-      pre = v;
-    }
-
-    return new Tuple(bestCriterionValue, bestFeatureSplit);
+    return criterion;
   }
 
   @Override
   public double getLabel(int [] indices) {
     return y.get(indices).mean();
   }
-
-  @Override
-  public void init( int [] indices ) {
-    this.indices = indices;
-    this.size = indices.length;
-    this.y = db.y;
-    this.x = db.x;
-  }
 }
-
-class GiniCriterion extends Criterion {
-  @Override
-  public double getLabel(int [] indices) {
-    return 0;
-  }
-
-  @Override
-  public void init(int[] indices) {
-  }
-
-  @Override
-  public Tuple<Double, Double> getBestSplitValue(int featureIndex) {
-    return new Tuple(0, 0);
-  }
-}
-
 
 /**
- * A class to calculate the miss classification error criterion.
- * All the values will be cast to int label.
  */
-class MissClassCriterion extends Criterion {
-  protected DoubleMatrix y;
-  protected DoubleMatrix x;
-  protected int [] indices;
-  protected int size;
-
-  @Override
-  public void init(int[] indices) {
-    this.indices = indices;
-    this.size = indices.length;
-    this.y = db.y;
-    this.x = db.x;
-  }
+abstract class ClassifyCriterion extends Criterion {
+  Map<Integer, Integer> leftCount;
+  Map<Integer, Integer> rightCount;
 
   @Override
   public double getLabel(int [] indices) {
-    return 0;
+    DoubleMatrix ys = y.get(indices);
+    Map<Integer, Integer> countMap = Maps.newHashMap();
+    for( int i = 0; i < size; i++ ) {
+      double yi = ys.get(i);
+      MapUtils.incrementMap(countMap, DoubleUtils.intBase(yi, DoubleUtils.DOUBLE_BASE), 1);
+    }
+    return DoubleUtils.undoIntBase(getMaxValueEntry(countMap).getKey(), DoubleUtils.DOUBLE_BASE);
   }
 
+  protected Map.Entry<Integer, Integer> getMaxValueEntry(Map<Integer,Integer> countMap) {
+    int maxCount = 0;
+    Map.Entry<Integer, Integer> maxEntry = null;
+    for( Map.Entry<Integer, Integer> entry : countMap.entrySet() ) {
+      if( entry.getValue() > maxCount ) {
+        maxCount = entry.getValue();
+        maxEntry = entry;
+      }
+    }
+    return maxEntry;
+  }
+
+  protected void createInstance() {
+    leftCount = Maps.newHashMap();
+    rightCount = Maps.newHashMap();
+    for(double yi : ySort.data) {
+      MapUtils.incrementMap(rightCount, DoubleUtils.intBase(yi, DoubleUtils.DOUBLE_BASE), 1);
+    }
+  }
+
+  protected void updateInstance(double yi) {
+    MapUtils.incrementMap(leftCount, DoubleUtils.intBase(yi, DoubleUtils.DOUBLE_BASE), 1);
+    MapUtils.incrementMap(rightCount, DoubleUtils.intBase(yi, DoubleUtils.DOUBLE_BASE), -1);
+  }
+
+  abstract protected double calcInstance() ;
+}
+
+class MissClassifyCriterion extends ClassifyCriterion {
+  protected double calcInstance() {
+    double sum = 0;
+    Map.Entry<Integer, Integer> maxLeftEntry = getMaxValueEntry(leftCount);
+    sum += ( leftCount.size() - maxLeftEntry.getValue() ) * 1.0 / leftCount.size();
+
+    Map.Entry<Integer, Integer> maxRightEntry = getMaxValueEntry(rightCount);
+    sum += ( rightCount.size() - maxRightEntry.getValue() ) * 1.0 / rightCount.size();
+    return sum;
+  }
+}
+
+class GiniCriterion extends ClassifyCriterion {
   @Override
-  public Tuple<Double, Double> getBestSplitValue(int featureIndex) {
-    return new Tuple(0, 0);
-  }
+  protected double calcInstance() {
+    double sum = 0;
+    Map.Entry<Integer, Integer> maxLeftEntry = getMaxValueEntry(leftCount);
+    double pl = ( leftCount.size() - maxLeftEntry.getValue() ) * 1.0 / leftCount.size();
+    Integer key = maxLeftEntry.getKey();
+    for( Map.Entry<Integer, Integer> entry: leftCount.entrySet()) {
+      if(! entry.getKey().equals(key) ) {
+        double pm = ( leftCount.size() - entry.getValue() ) * 1.0 / leftCount.size();
+        sum += pm * pl;
+      }
+    }
 
+    Map.Entry<Integer, Integer> maxRightEntry = getMaxValueEntry(rightCount);
+    double pr = ( rightCount.size() - maxRightEntry.getValue() ) * 1.0 / rightCount.size();
+    for( Map.Entry<Integer, Integer> entry: leftCount.entrySet()) {
+      if( !entry.getKey().equals(key) ) {
+        double pm = ( rightCount.size() - entry.getValue() ) * 1.0 / rightCount.size();
+        sum += pm * pr;
+      }
+    }
+    return sum;
+  }
+}
+
+class CrossEntropyCriterion extends ClassifyCriterion {
+  @Override
+  protected double calcInstance() {
+    double sum = 0;
+    for( Map.Entry<Integer, Integer> entry: leftCount.entrySet()) {
+      double pm = ( leftCount.size() - entry.getValue() ) * 1.0 / leftCount.size();
+      sum += pm * Math.log(pm);
+    }
+
+    for( Map.Entry<Integer, Integer> entry: leftCount.entrySet()) {
+      double pm = ( rightCount.size() - entry.getValue() ) * 1.0 / rightCount.size();
+      sum += pm * Math.log(pm);
+    }
+    return sum;
+  }
 }
 

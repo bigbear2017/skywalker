@@ -30,7 +30,6 @@ public class Node {
   public Node(int [] indices) {
     this.indices = indices;
     this.criterion = Criterion.getCriterion(pb, db);
-    this.criterion.init(indices);
   }
 
   /**
@@ -67,10 +66,9 @@ public class Node {
 
   public Splitter getBestSplitter() {
     Splitter bestSplitter = new Splitter();
-    criterion.init(indices);
     double bestCriterion = -Double.MAX_VALUE;
     for (int f = 0; f < db.featureSize; f++ ) {
-      Tuple<Double, Double> split = criterion.getBestSplitValue(f);
+      Tuple<Double, Double> split = criterion.getBestSplitValue(indices, f);
       if( split.first() > bestCriterion ) {
         bestCriterion = split.first();
         bestSplitter.setFeatureIndex(f);

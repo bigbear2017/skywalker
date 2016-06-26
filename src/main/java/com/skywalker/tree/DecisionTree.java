@@ -1,10 +1,13 @@
 package com.skywalker.tree;
 
+import com.google.common.collect.Sets;
+import com.skywalker.utils.DoubleUtils;
 import com.skywalker.utils.OptionParser;
 import org.jblas.DoubleMatrix;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 
 import org.kohsuke.args4j.Option;
 
@@ -28,6 +31,14 @@ public class DecisionTree {
     this.pb = pb;
   }
 
+  private void beforeFit(DoubleMatrix x, DoubleMatrix y) {
+    db = new DataBlock(x, y);
+    headNode = Node.getHeadNode(pb, db);
+    if( pb.criterion.equals("mse") ) {
+      pb.isClassify = false;
+    }
+  }
+
   /**
    * With all the parameters above, fit the data with the model.
    *
@@ -35,8 +46,7 @@ public class DecisionTree {
    * @param y The labels to fit the model
    */
   public void fit(DoubleMatrix x, DoubleMatrix y) {
-    db = new DataBlock(x, y);
-    headNode = Node.getHeadNode(pb, db);
+    beforeFit(x,y);
     Queue<Node> curLevelNodes = new LinkedList<Node>();
     curLevelNodes.add(headNode);
     int treeHeight = 0;
@@ -133,6 +143,11 @@ public class DecisionTree {
     @Option(name = "-criterion", usage = "Criterion to use in the evaluation")
     public String criterion ;
 
+    @Option(name = "-isClassify", usage = "Classfication or Regression Tree ")
+    public boolean isClassify = false;
+
+    @Option(name = "-numLabels", usage = "Number of labels")
+    public int numLabels = 0;
   }
   public static class DataBlock {
     public final DoubleMatrix x;
