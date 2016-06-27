@@ -6,6 +6,7 @@ package com.skywalker.utils;
  */
 public class DoubleUtils {
   public static final int DOUBLE_BASE = 100;
+  public static final double EPSILON = 1e-5;
 
   public static long longBase(double yi, int base) {
     return (long) (yi * base);
@@ -21,5 +22,9 @@ public class DoubleUtils {
 
   public static double undoIntBase(int yi, int base) {
     return yi * 1.0 / base;
+  }
+
+  public static boolean equals(double x1, double x2) {
+    return Math.abs(x1 - x2) < EPSILON;
   }
 }

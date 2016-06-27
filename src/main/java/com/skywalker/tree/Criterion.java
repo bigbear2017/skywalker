@@ -58,29 +58,44 @@ public abstract class Criterion {
   public Tuple<Double, Double> getBestSplitValue(int [] indices, int featureIndex) {
     init(indices, featureIndex);
     createInstance();
-    double preX = xSort.get(0);
     double preY = ySort.get(0);
     double bestCriterionValue = Double.MAX_VALUE;
     double bestFeatureSplit = Double.MAX_VALUE;
-    for(int i = 1; i < size; i++) {
-      double v = xSort.get(i);
+    //int besti = 0;
+    //find the minimal split right
+    int end = size - 1 - pb.minSamples;
+    double preX = xSort.get(end);
+    while( end > pb.minSamples ) {
+      double xi = xSort.get(end - 1);
+      if ( xi != preX ) {
+        break;
+      }
+      preX = xi;
+      end --;
+    }
+
+    preX = xSort.get(0);
+    //find the minimal split right
+    for(int i = 1; i < end; i++) {
+      double xi = xSort.get(i);
       double yi = ySort.get(i);
       updateInstance(preY);
       //find all the samples that have the same value,
       //then we calculate the criterion.
-      if( v == preX || yi == preY) {
+      if( xi == preX || i < pb.minSamples) {
         continue;
       }
       double criterion = calcInstance();
       if( criterion < bestCriterionValue ) {
         bestCriterionValue = criterion;
         bestFeatureSplit = preX;
+        //besti = i;
       }
-      preX = v;
+      preX = xi;
       preY = yi;
     }
 
-    System.out.println("best criterion value: " + bestCriterionValue);
+    //System.out.println("best criterion value: " + bestCriterionValue + "best I: " + besti);
     return new Tuple(bestCriterionValue, bestFeatureSplit);
   }
 
@@ -221,7 +236,7 @@ class GiniCriterion extends ClassifyCriterion {
     Integer key = maxLeftEntry.getKey();
     for( Map.Entry<Integer, Integer> entry: leftCount.entrySet()) {
       if(! entry.getKey().equals(key) ) {
-        double pm = ( leftSize - entry.getValue() ) * 1.0 / leftSize;
+        double pm = entry.getValue()  * 1.0 / leftSize;
         sum += pm * pl;
       }
     }
@@ -230,7 +245,7 @@ class GiniCriterion extends ClassifyCriterion {
     double pr = ( rightCount.size() - maxRightEntry.getValue() ) * 1.0 / rightCount.size();
     for( Map.Entry<Integer, Integer> entry: leftCount.entrySet()) {
       if( !entry.getKey().equals(key) ) {
-        double pm = ( rightSize - entry.getValue() ) * 1.0 / rightSize;
+        double pm =  entry.getValue()  * 1.0 / rightSize;
         sum += pm * pr;
       }
     }
@@ -243,12 +258,12 @@ class CrossEntropyCriterion extends ClassifyCriterion {
   protected double calcInstance() {
     double sum = 0;
     for( Map.Entry<Integer, Integer> entry: leftCount.entrySet()) {
-      double pm = ( leftSize - entry.getValue() ) * 1.0 / leftSize;
+      double pm = entry.getValue()  * 1.0 / leftSize;
       sum += pm * Math.log(pm);
     }
 
     for( Map.Entry<Integer, Integer> entry: leftCount.entrySet()) {
-      double pm = ( rightSize - entry.getValue() ) * 1.0 / rightSize;
+      double pm =  entry.getValue()  * 1.0 / rightSize;
       sum += pm * Math.log(pm);
     }
     return sum;

@@ -66,10 +66,11 @@ public class Node {
 
   public Splitter getBestSplitter() {
     Splitter bestSplitter = new Splitter();
-    double bestCriterion = -Double.MAX_VALUE;
+    double bestCriterion = Double.MAX_VALUE;
     for (int f = 0; f < db.featureSize; f++ ) {
       Tuple<Double, Double> split = criterion.getBestSplitValue(indices, f);
-      if( split.first() > bestCriterion ) {
+      //System.out.println("Split feature : " + f);
+      if( split.first() < bestCriterion ) {
         bestCriterion = split.first();
         bestSplitter.setFeatureIndex(f);
         bestSplitter.setFeatureValue(split.second());

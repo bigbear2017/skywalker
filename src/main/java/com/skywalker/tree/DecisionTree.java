@@ -57,6 +57,7 @@ public class DecisionTree {
         Splitter splitter = currentNode.getBestSplitter();
         Node leftNode = currentNode.splitLeftNode(splitter);
         Node rightNode = currentNode.splitRightNode(splitter);
+        //System.out.println("Split index" + splitter.getFeatureIndex() + "Split value:" + splitter.getFeatureValue());
         if (leftNode.getNumSamples() < pb.minSamples || rightNode.getNumSamples() < pb.minSamples) {
           continue;
         }
@@ -98,12 +99,12 @@ public class DecisionTree {
   private void printNode(Node node) {
     if( node != null  ) {
       if( !node.isLeafNode()) {
+        printNode(node.getLeftNode());
         System.out.println("Split Index:" + node.getFeatureIndex() + " Split Value:" + node.getFeatureValue()
                 + " node size :" + node.getNumSamples());
-        printNode(node.getLeftNode());
         printNode(node.getRightNode());
       } else {
-        System.out.println("Leaf value:" + node.getLabel());
+        System.out.println("Leaf value:" + node.getLabel() + " Leaf Size : " + node.getNumSamples());
       }
     }
   }
