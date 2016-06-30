@@ -1,15 +1,11 @@
 package com.skywalker.tree;
 
-import com.google.common.collect.Sets;
-import com.skywalker.utils.DoubleUtils;
 import com.skywalker.utils.OptionParser;
 import org.jblas.DoubleMatrix;
+import org.kohsuke.args4j.Option;
 
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Set;
-
-import org.kohsuke.args4j.Option;
 
 /**
  * This class will implement the simplest decision tree algorithm.

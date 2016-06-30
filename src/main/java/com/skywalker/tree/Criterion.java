@@ -10,8 +10,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The criterion can only be used for two classes.
- * For multiple class case, it will be implemented later.
+ * Here we implement the criterion class. We calculate the criterion incrementally, which means,
+ * for one feature, we update the criterion value for all the possible splits. We do not need
+ * to scan the data every time. To implement new criterion, we only need to figure out how to
+ * calculate the value incrementally.
+ * <p>
+ *
+ * We have implement regression criterion and classification criterion. For regression criterion,
+ * we have used the method : (a - b)^2 = a^2 + b^2 - 2 * a * b. So each time, we update a^2, b^2
+ * and 2 * a * b. For classification criterion, it will be easier to calculate the value.
  *
  * @author caonn
  * @version 16-3-7.
@@ -220,9 +227,6 @@ class MissClassifyCriterion extends ClassifyCriterion {
 
     Map.Entry<Integer, Integer> maxRightEntry = getMaxValueEntry(rightCount);
     sum += ( rightSize - maxRightEntry.getValue() ) * 1.0 / rightSize;
-    //System.out.println("maxleft size:" + maxLeftEntry.getValue());
-    //System.out.println("maxright size:" + maxRightEntry.getValue());
-    //System.out.println("sum : " + sum + "leftSize : " + leftSize + " rightSize : " + rightSize);
     return sum;
   }
 }
